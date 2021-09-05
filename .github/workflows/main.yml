@@ -1,6 +1,5 @@
 # Template to sync with upstream
 name: Sync Upstream
-
 env:
   # Required, URL to upstream (fork base)
   UPSTREAM_URL: "https://github.com/qbittorrent/qBittorrent.git"
@@ -15,7 +14,6 @@ env:
   MERGE_ARGS: ""
   # Optional push arguments
   PUSH_ARGS: ""
-
 # This runs every day on 1801 UTC
 on:
   # Or on push, if for mirror it runs on workflow setup and changes
@@ -24,14 +22,13 @@ on:
     - cron: '1 18 * * *'
   # Allows manual workflow run (must in default branch to work)
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: GitHub Sync to Upstream Repository
         uses: dabreadman/sync-upstream-repo@v1.0.0.b
-        with: 
+        with:
           upstream_repo: ${{ env.UPSTREAM_URL }}
           upstream_branch: ${{ env.UPSTREAM_BRANCH }}
           downstream_branch: ${{ env.DOWNSTREAM_BRANCH }}
