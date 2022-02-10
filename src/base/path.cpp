@@ -42,7 +42,7 @@ const Qt::CaseSensitivity CASE_SENSITIVITY = Qt::CaseInsensitive;
 const Qt::CaseSensitivity CASE_SENSITIVITY = Qt::CaseSensitive;
 #endif
 
-const int PATHLIST_TYPEID = qRegisterMetaType<PathList>();
+const int PATHLIST_TYPEID = qRegisterMetaType<PathList>("PathList");
 
 Path::Path(const QString &pathStr)
     : m_pathStr {QDir::cleanPath(pathStr)}
@@ -272,7 +272,7 @@ Path Path::createUnchecked(const QString &pathStr)
 
 bool operator==(const Path &lhs, const Path &rhs)
 {
-    return (lhs.m_pathStr.compare(rhs.m_pathStr, CASE_SENSITIVITY) == 0);
+    return (lhs.data().compare(rhs.data(), CASE_SENSITIVITY) == 0);
 }
 
 bool operator!=(const Path &lhs, const Path &rhs)
