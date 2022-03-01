@@ -64,6 +64,7 @@ namespace
         RESUME_DATA_STORAGE,
 #if defined(Q_OS_WIN)
         OS_MEMORY_PRIORITY,
+        MEMORY_WORKING_SET_LIMIT,
 #endif
         // network interface
         NETWORK_IFACE,
@@ -106,6 +107,7 @@ namespace
         DISK_CACHE,
         DISK_CACHE_TTL,
 #endif
+        DISK_QUEUE_SIZE,
         OS_CACHE,
 #ifndef QBT_USES_LIBTORRENT2
         COALESCE_RW,
@@ -140,6 +142,7 @@ namespace
         PEER_TURNOVER,
         PEER_TURNOVER_CUTOFF,
         PEER_TURNOVER_INTERVAL,
+        REQUEST_QUEUE_SIZE,
 
         ROW_COUNT
     };
@@ -196,6 +199,8 @@ void AdvancedSettings::saveAdvancedSettings()
         break;
     }
     session->setOSMemoryPriority(prio);
+
+    static_cast<Application *>(QCoreApplication::instance())->setMemoryWorkingSetLimit(m_spinBoxMemoryWorkingSetLimit.value());
 #endif
     // Async IO threads
     session->setAsyncIOThreads(m_spinBoxAsyncIOThreads.value());
@@ -212,6 +217,8 @@ void AdvancedSettings::saveAdvancedSettings()
     session->setDiskCacheSize(m_spinBoxCache.value());
     session->setDiskCacheTTL(m_spinBoxCacheTTL.value());
 #endif
+    // Disk queue size
+    session->setDiskQueueSize(m_spinBoxDiskQueueSize.value() * 1024);
     // Enable OS cache
     session->setUseOSCache(m_checkBoxOsCache.isChecked());
 #ifndef QBT_USES_LIBTORRENT2
@@ -319,6 +326,8 @@ void AdvancedSettings::saveAdvancedSettings()
     session->setPeerTurnover(m_spinBoxPeerTurnover.value());
     session->setPeerTurnoverCutoff(m_spinBoxPeerTurnoverCutoff.value());
     session->setPeerTurnoverInterval(m_spinBoxPeerTurnoverInterval.value());
+    // Maximum outstanding requests to a single peer
+    session->setRequestQueueSize(m_spinBoxRequestQueueSize.value());
 }
 
 #ifndef QBT_USES_LIBTORRENT2
@@ -436,6 +445,15 @@ void AdvancedSettings::loadAdvancedSettings()
     addRow(OS_MEMORY_PRIORITY, (tr("Process memory priority (Windows >= 8 only)")
         + ' ' + makeLink("https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/ns-processthreadsapi-memory_priority_information", "(?)"))
         , &m_comboBoxOSMemoryPriority);
+
+    m_spinBoxMemoryWorkingSetLimit.setMinimum(1);
+    m_spinBoxMemoryWorkingSetLimit.setMaximum(std::numeric_limits<int>::max());
+    m_spinBoxMemoryWorkingSetLimit.setSuffix(tr(" MiB"));
+    m_spinBoxMemoryWorkingSetLimit.setValue(static_cast<Application *>(QCoreApplication::instance())->memoryWorkingSetLimit());
+
+    addRow(MEMORY_WORKING_SET_LIMIT, (tr("Physical memory (RAM) usage limit")
+        + ' ' + makeLink("https://wikipedia.org/wiki/Working_set", "(?)"))
+        , &m_spinBoxMemoryWorkingSetLimit);
 #endif
 
     // Async IO threads
@@ -498,6 +516,13 @@ void AdvancedSettings::loadAdvancedSettings()
     addRow(DISK_CACHE_TTL, (tr("Disk cache expiry interval") + ' ' + makeLink("https://www.libtorrent.org/reference-Settings.html#cache_expiry", "(?)"))
             , &m_spinBoxCacheTTL);
 #endif
+    // Disk queue size
+    m_spinBoxDiskQueueSize.setMinimum(1);
+    m_spinBoxDiskQueueSize.setMaximum(std::numeric_limits<int>::max());
+    m_spinBoxDiskQueueSize.setValue(session->diskQueueSize() / 1024);
+    m_spinBoxDiskQueueSize.setSuffix(tr(" KiB"));
+    addRow(DISK_QUEUE_SIZE, (tr("Disk queue size") + ' ' + makeLink("https://www.libtorrent.org/reference-Settings.html#max_queued_disk_bytes", "(?)"))
+            , &m_spinBoxDiskQueueSize);
     // Enable OS cache
     m_checkBoxOsCache.setChecked(session->useOSCache());
     addRow(OS_CACHE, (tr("Enable OS cache") + ' ' + makeLink("https://www.libtorrent.org/reference-Settings.html#disk_io_write_mode", "(?)"))
@@ -759,6 +784,12 @@ void AdvancedSettings::loadAdvancedSettings()
     m_spinBoxPeerTurnoverInterval.setValue(session->peerTurnoverInterval());
     addRow(PEER_TURNOVER_INTERVAL, (tr("Peer turnover disconnect interval") + ' ' + makeLink("https://www.libtorrent.org/reference-Settings.html#peer_turnover", "(?)"))
             , &m_spinBoxPeerTurnoverInterval);
+    // Maximum outstanding requests to a single peer
+    m_spinBoxRequestQueueSize.setMinimum(1);
+    m_spinBoxRequestQueueSize.setMaximum(std::numeric_limits<int>::max());
+    m_spinBoxRequestQueueSize.setValue(session->requestQueueSize());
+    addRow(REQUEST_QUEUE_SIZE, (tr("Maximum outstanding requests to a single peer") + ' ' + makeLink("https://www.libtorrent.org/reference-Settings.html#max_out_request_queue", "(?)"))
+            , &m_spinBoxRequestQueueSize);
 }
 
 template <typename T>
