@@ -517,6 +517,22 @@ void TorrentImpl::setAutoManaged(const bool enable)
         m_nativeHandle.unset_flags(lt::torrent_flags::auto_managed);
 }
 
+QVector<QString> TorrentImpl::trackerURLs() const
+{
+    const std::vector<lt::announce_entry> nativeTrackers = m_nativeHandle.trackers();
+
+    QVector<QString> urls;
+    urls.reserve(static_cast<decltype(urls)::size_type>(nativeTrackers.size()));
+
+    for (const lt::announce_entry &tracker : nativeTrackers)
+    {
+        const QString trackerURL = QString::fromStdString(tracker.url);
+        urls.push_back(trackerURL);
+    }
+
+    return urls;
+}
+
 QVector<TrackerEntry> TorrentImpl::trackers() const
 {
     const std::vector<lt::announce_entry> nativeTrackers = m_nativeHandle.trackers();
@@ -746,7 +762,7 @@ bool TorrentImpl::belongsToCategory(const QString &category) const
 
     if (m_category == category) return true;
 
-    if (m_session->isSubcategoriesEnabled() && m_category.startsWith(category + '/'))
+    if (m_session->isSubcategoriesEnabled() && m_category.startsWith(category + u'/'))
         return true;
 
     return false;
@@ -1843,7 +1859,7 @@ void TorrentImpl::handleFileRenamedAlert(const lt::file_renamed_alert *p)
     // For example renaming "a/b/c" to "d/b/c", then folders "a/b" and "a" will
     // be removed if they are empty
     const Path oldFilePath = m_filePaths.at(fileIndex);
-    const Path newFilePath {QString(p->new_name())};
+    const Path newFilePath {QString::fromUtf8(p->new_name())};
 
     // Check if ".!qB" extension was just added or removed
     // We should compare path in a case sensitive manner even on case insensitive
