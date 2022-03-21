@@ -223,13 +223,10 @@ MainWindow::MainWindow(QWidget *parent)
     // m_transferListWidget->setStyleSheet("QTreeView {border: none;}");  // borderless
     m_propertiesWidget = new PropertiesWidget(hSplitter);
     connect(m_transferListWidget, &TransferListWidget::currentTorrentChanged, m_propertiesWidget, &PropertiesWidget::loadTorrentInfos);
-    m_transferListFiltersWidget = new TransferListFiltersWidget(m_splitter, m_transferListWidget, isDownloadTrackerFavicon());
     hSplitter->addWidget(m_transferListWidget);
     hSplitter->addWidget(m_propertiesWidget);
-    m_splitter->addWidget(m_transferListFiltersWidget);
     m_splitter->addWidget(hSplitter);
-    m_splitter->setCollapsible(0, true);
-    m_splitter->setCollapsible(1, false);
+    m_splitter->setCollapsible(0, false);
     m_tabs->addTab(m_splitter,
 #ifndef Q_OS_MACOS
         UIThemeManager::instance()->getIcon(u"folder-remote"_qs),
@@ -238,12 +235,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(m_searchFilter, &LineEdit::textChanged, m_transferListWidget, &TransferListWidget::applyNameFilter);
     connect(hSplitter, &QSplitter::splitterMoved, this, &MainWindow::writeSettings);
-    connect(m_splitter, &QSplitter::splitterMoved, this, &MainWindow::writeSettings);
+    connect(m_splitter, &QSplitter::splitterMoved, this, &MainWindow::writeSplitterSettings);
     connect(BitTorrent::Session::instance(), &BitTorrent::Session::trackersChanged, m_propertiesWidget, &PropertiesWidget::loadTrackers);
-    connect(BitTorrent::Session::instance(), &BitTorrent::Session::trackersAdded, m_transferListFiltersWidget, &TransferListFiltersWidget::addTrackers);
-    connect(BitTorrent::Session::instance(), &BitTorrent::Session::trackersRemoved, m_transferListFiltersWidget, &TransferListFiltersWidget::removeTrackers);
-    connect(BitTorrent::Session::instance(), &BitTorrent::Session::trackerlessStateChanged, m_transferListFiltersWidget, &TransferListFiltersWidget::changeTrackerless);
-    connect(BitTorrent::Session::instance(), &BitTorrent::Session::trackerEntriesUpdated, m_transferListFiltersWidget, &TransferListFiltersWidget::trackerEntriesUpdated);
 
 #ifdef Q_OS_MACOS
     // Increase top spacing to avoid tab overlapping
@@ -435,6 +428,20 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_propertiesWidget->readSettings();
 
+    const bool isFiltersSidebarVisible = pref->isFiltersSidebarVisible();
+    m_ui->actionShowFiltersSidebar->setChecked(isFiltersSidebarVisible);
+    if (isFiltersSidebarVisible)
+    {
+        showFiltersSidebar(true);
+    }
+    else
+    {
+        m_transferListWidget->applyStatusFilter(pref->getTransSelFilter());
+        m_transferListWidget->applyCategoryFilter(QString());
+        m_transferListWidget->applyTagFilter(QString());
+        m_transferListWidget->applyTrackerFilterAll();
+    }
+
     // Start watching the executable for updates
     m_executableWatcher = new QFileSystemWatcher(this);
     connect(m_executableWatcher, &QFileSystemWatcher::fileChanged, this, &MainWindow::notifyOfUpdate);
@@ -538,7 +545,8 @@ bool MainWindow::isDownloadTrackerFavicon() const
 
 void MainWindow::setDownloadTrackerFavicon(const bool value)
 {
-    m_transferListFiltersWidget->setDownloadTrackerFavicon(value);
+    if (m_transferListFiltersWidget)
+        m_transferListFiltersWidget->setDownloadTrackerFavicon(value);
     m_storeDownloadTrackerFavicon = value;
 }
 
@@ -784,9 +792,14 @@ void MainWindow::writeSettings()
 {
     Preferences *const pref = Preferences::instance();
     pref->setMainGeometry(saveGeometry());
-    // Splitter size
-    pref->setMainVSplitterState(m_splitter->saveState());
     m_propertiesWidget->saveSettings();
+}
+
+void MainWindow::writeSplitterSettings()
+{
+    Q_ASSERT(m_splitter->widget(0) == m_transferListFiltersWidget);
+    Preferences *const pref = Preferences::instance();
+    pref->setFiltersSidebarWidth(m_splitter->sizes()[0]);
 }
 
 void MainWindow::cleanup()
@@ -817,12 +830,6 @@ void MainWindow::readSettings()
     const QByteArray mainGeo = pref->getMainGeometry();
     if (!mainGeo.isEmpty() && restoreGeometry(mainGeo))
         m_posInitialized = true;
-    const QByteArray splitterState = pref->getMainVSplitterState();
-    if (splitterState.isEmpty())
-        // Default sizes
-        m_splitter->setSizes({ 120, m_splitter->width() - 120 });
-    else
-        m_splitter->restoreState(splitterState);
 }
 
 void MainWindow::balloonClicked()
@@ -1475,6 +1482,33 @@ void MainWindow::showStatusBar(bool show)
     }
 }
 
+void MainWindow::showFiltersSidebar(const bool show)
+{
+    Preferences *const pref = Preferences::instance();
+
+    if (show && !m_transferListFiltersWidget)
+    {
+        const int width = pref->getFiltersSidebarWidth();
+        m_transferListFiltersWidget = new TransferListFiltersWidget(m_splitter, m_transferListWidget, isDownloadTrackerFavicon());
+        m_splitter->insertWidget(0, m_transferListFiltersWidget);
+        m_splitter->setCollapsible(0, true);
+        m_splitter->setSizes({width, (m_splitter->width() - width)});
+
+        connect(BitTorrent::Session::instance(), &BitTorrent::Session::trackersAdded, m_transferListFiltersWidget, &TransferListFiltersWidget::addTrackers);
+        connect(BitTorrent::Session::instance(), &BitTorrent::Session::trackersRemoved, m_transferListFiltersWidget, &TransferListFiltersWidget::removeTrackers);
+        connect(BitTorrent::Session::instance(), &BitTorrent::Session::trackerlessStateChanged, m_transferListFiltersWidget, &TransferListFiltersWidget::changeTrackerless);
+        connect(BitTorrent::Session::instance(), &BitTorrent::Session::trackerEntriesUpdated, m_transferListFiltersWidget, &TransferListFiltersWidget::trackerEntriesUpdated);
+    }
+    else if (!show && m_transferListFiltersWidget)
+    {
+        Q_ASSERT(m_splitter->widget(0) == m_transferListFiltersWidget);
+
+        pref->setFiltersSidebarWidth(m_splitter->sizes()[0]);
+        delete m_transferListFiltersWidget;
+        m_transferListFiltersWidget = nullptr;
+    }
+}
+
 void MainWindow::loadPreferences()
 {
     const Preferences *pref = Preferences::instance();
@@ -1604,7 +1638,7 @@ void MainWindow::reloadSessionStats()
     }
     else if (!MacUtils::badgeLabelText().isEmpty())
     {
-        MacUtils::setBadgeLabelText("");
+        MacUtils::setBadgeLabelText({});
     }
 #else
     if (m_systrayIcon)
@@ -1801,6 +1835,13 @@ void MainWindow::on_actionShowStatusbar_triggered()
     showStatusBar(isVisible);
 }
 
+void MainWindow::on_actionShowFiltersSidebar_triggered(const bool checked)
+{
+    Preferences *const pref = Preferences::instance();
+    pref->setFiltersSidebarVisible(checked);
+    showFiltersSidebar(checked);
+}
+
 void MainWindow::on_actionSpeedInTitleBar_triggered()
 {
     m_displaySpeedInTitle = static_cast<QAction *>(sender())->isChecked();
@@ -1905,8 +1946,8 @@ void MainWindow::handleUpdateCheckFinished(ProgramUpdater *updater, const bool i
     const QString newVersion = updater->getNewVersion();
     if (!newVersion.isEmpty())
     {
-        const QString msg {tr("A new version is available.") + "<br/>"
-            + tr("Do you want to download %1?").arg(newVersion) + "<br/><br/>"
+        const QString msg {tr("A new version is available.") + u"<br/>"
+            + tr("Do you want to download %1?").arg(newVersion) + u"<br/><br/>"
             + QString::fromLatin1("<a href=\"https://www.qbittorrent.org/news.php\">%1</a>").arg(tr("Open changelog..."))};
         auto *msgBox = new QMessageBox {QMessageBox::Question, tr("qBittorrent Update Available"), msg
             , (QMessageBox::Yes | QMessageBox::No), this};
@@ -2082,9 +2123,9 @@ void MainWindow::installPython()
     setCursor(QCursor(Qt::WaitCursor));
     // Download python
 #ifdef QBT_APP_64BIT
-    const QString installerURL = "https://www.python.org/ftp/python/3.8.10/python-3.8.10-amd64.exe";
+    const auto installerURL = u"https://www.python.org/ftp/python/3.8.10/python-3.8.10-amd64.exe"_qs;
 #else
-    const QString installerURL = "https://www.python.org/ftp/python/3.8.10/python-3.8.10.exe";
+    const auto installerURL = u"https://www.python.org/ftp/python/3.8.10/python-3.8.10.exe"_qs;
 #endif
     Net::DownloadManager::instance()->download(
                 Net::DownloadRequest(installerURL).saveToFile(true)
@@ -2109,7 +2150,7 @@ void MainWindow::pythonDownloadFinished(const Net::DownloadResult &result)
 
     const Path exePath = result.filePath + ".exe";
     Utils::Fs::renameFile(result.filePath, exePath);
-    installer.start(exePath.toString(), {"/passive"});
+    installer.start(exePath.toString(), {u"/passive"_qs});
 
     // Wait for setup to complete
     installer.waitForFinished(10 * 60 * 1000);
