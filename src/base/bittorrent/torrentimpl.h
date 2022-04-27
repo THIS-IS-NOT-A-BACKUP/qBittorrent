@@ -1,6 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2015  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2015-2022  Vladimir Golovnev <glassez@yandex.ru>
  * Copyright (C) 2006  Christophe Dumez <chris@qbittorrent.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -30,11 +30,13 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 
 #include <libtorrent/add_torrent_params.hpp>
 #include <libtorrent/fwd.hpp>
 #include <libtorrent/socket.hpp>
 #include <libtorrent/torrent_handle.hpp>
+#include <libtorrent/torrent_info.hpp>
 #include <libtorrent/torrent_status.hpp>
 
 #include <QBitArray>
@@ -227,7 +229,8 @@ namespace BitTorrent
         void clearPeers() override;
 
         QString createMagnetURI() const override;
-        nonstd::expected<void, QString> exportToFile(const Path &path) const;
+        nonstd::expected<QByteArray, QString> exportToBuffer() const override;
+        nonstd::expected<void, QString> exportToFile(const Path &path) const override;
 
         bool needSaveResumeData() const;
 
@@ -239,14 +242,15 @@ namespace BitTorrent
         void handleCategoryOptionsChanged();
         void handleAppendExtensionToggled();
         void saveResumeData();
-        void handleMoveStorageJobFinished(bool hasOutstandingJob);
+        void handleMoveStorageJobFinished(const Path &path, bool hasOutstandingJob);
         void fileSearchFinished(const Path &savePath, const PathList &fileNames);
         void updatePeerCount(const QString &trackerUrl, const lt::tcp::endpoint &endpoint, int count);
 
     private:
         using EventTrigger = std::function<void ()>;
 
-        void updateStatus();
+        std::shared_ptr<const lt::torrent_info> nativeTorrentInfo() const;
+
         void updateStatus(const lt::torrent_status &nativeStatus);
         void updateState();
 
@@ -280,15 +284,18 @@ namespace BitTorrent
         void endReceivedMetadataHandling(const Path &savePath, const PathList &fileNames);
         void reload();
 
+        nonstd::expected<lt::entry, QString> exportTorrent() const;
+
         Session *const m_session;
         lt::session *m_nativeSession;
         lt::torrent_handle m_nativeHandle;
-        lt::torrent_status m_nativeStatus;
+        mutable lt::torrent_status m_nativeStatus;
         TorrentState m_state = TorrentState::Unknown;
         TorrentInfo m_torrentInfo;
         PathList m_filePaths;
         QHash<lt::file_index_t, int> m_indexMap;
         QVector<DownloadPriority> m_filePriorities;
+        QBitArray m_completedFiles;
         SpeedMonitor m_speedMonitor;
 
         InfoHash m_infoHash;
@@ -298,6 +305,8 @@ namespace BitTorrent
         QQueue<EventTrigger> m_moveFinishedTriggers;
         int m_renameCount = 0;
         bool m_storageIsMoving = false;
+
+        QQueue<EventTrigger> m_statusUpdatedTriggers;
 
         MaintenanceJob m_maintenanceJob = MaintenanceJob::None;
 
