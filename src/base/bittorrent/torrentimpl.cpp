@@ -287,10 +287,11 @@ TorrentImpl::TorrentImpl(Session *session, lt::session *nativeSession
         m_filePaths.reserve(filesCount);
         m_indexMap.reserve(filesCount);
         m_filePriorities.reserve(filesCount);
-        m_completedFiles.resize(filesCount);
         const std::vector<lt::download_priority_t> filePriorities =
                 resized(m_ltAddTorrentParams.file_priorities, m_ltAddTorrentParams.ti->num_files()
                         , LT::toNative(m_ltAddTorrentParams.file_priorities.empty() ? DownloadPriority::Normal : DownloadPriority::Ignored));
+
+        m_completedFiles.fill(static_cast<bool>(m_ltAddTorrentParams.flags & lt::torrent_flags::seed_mode), filesCount);
 
         for (int i = 0; i < filesCount; ++i)
         {
@@ -1531,11 +1532,13 @@ void TorrentImpl::endReceivedMetadataHandling(const Path &savePath, const PathLi
     const std::shared_ptr<lt::torrent_info> metadata = std::const_pointer_cast<lt::torrent_info>(nativeTorrentInfo());
     m_torrentInfo = TorrentInfo(*metadata);
     m_filePriorities.reserve(filesCount());
-    m_completedFiles.resize(filesCount());
     const auto nativeIndexes = m_torrentInfo.nativeIndexes();
     const std::vector<lt::download_priority_t> filePriorities =
             resized(p.file_priorities, metadata->files().num_files()
                     , LT::toNative(p.file_priorities.empty() ? DownloadPriority::Normal : DownloadPriority::Ignored));
+
+    m_completedFiles.fill(static_cast<bool>(p.flags & lt::torrent_flags::seed_mode), filesCount());
+
     for (int i = 0; i < fileNames.size(); ++i)
     {
         const auto nativeIndex = nativeIndexes.at(i);
@@ -1790,7 +1793,10 @@ void TorrentImpl::handleSaveResumeDataAlert(const lt::save_resume_data_alert *p)
     {
         Q_ASSERT(m_indexMap.isEmpty());
 
+        const auto isSeedMode = static_cast<bool>(m_ltAddTorrentParams.flags & lt::torrent_flags::seed_mode);
         m_ltAddTorrentParams = p->params;
+        if (isSeedMode)
+            m_ltAddTorrentParams.flags |= lt::torrent_flags::seed_mode;
 
         m_ltAddTorrentParams.have_pieces.clear();
         m_ltAddTorrentParams.verified_pieces.clear();
@@ -1849,8 +1855,11 @@ void TorrentImpl::prepareResumeData(const lt::add_torrent_params &params)
     }
     else
     {
+        const bool preserveSeedMode = (!hasMetadata() && (m_ltAddTorrentParams.flags & lt::torrent_flags::seed_mode));
         // Update recent resume data
         m_ltAddTorrentParams = params;
+        if (preserveSeedMode)
+            m_ltAddTorrentParams.flags |= lt::torrent_flags::seed_mode;
     }
 
     // We shouldn't save upload_mode flag to allow torrent operate normally on next run
@@ -2260,7 +2269,7 @@ nonstd::expected<lt::entry, QString> TorrentImpl::exportTorrent() const
     {
 #ifdef QBT_USES_LIBTORRENT2
         const std::shared_ptr<lt::torrent_info> completeTorrentInfo = m_nativeHandle.torrent_file_with_hashes();
-        const std::shared_ptr<lt::torrent_info> torrentInfo = {completeTorrentInfo ? completeTorrentInfo : info().nativeInfo()};
+        const std::shared_ptr<lt::torrent_info> torrentInfo = (completeTorrentInfo ? completeTorrentInfo : info().nativeInfo());
 #else
         const std::shared_ptr<lt::torrent_info> torrentInfo = info().nativeInfo();
 #endif
