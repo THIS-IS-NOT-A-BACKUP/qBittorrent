@@ -1,6 +1,9 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2017  Mike Tzou
+ * Copyright (C) 2022  Prince Gupta <guptaprince8832@gmail.com>
+ * Copyright (C) 2015-2022  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2010  Christophe Dumez <chris@qbittorrent.org>
+ * Copyright (C) 2010  Arnaud Demaiziere <arnaud@qbittorrent.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,26 +31,30 @@
 
 #pragma once
 
+#include <QtContainerFwd>
+#include <QObject>
+#include <QString>
+#include <QVariantHash>
+
 #include "base/pathfwd.h"
 
-class QIcon;
-class QPixmap;
-class QPoint;
-class QSize;
-class QWidget;
-
-namespace Utils::Gui
+namespace RSS::Private
 {
-    QPixmap scaledPixmap(const QIcon &icon, const QWidget *widget, int height);
-    QPixmap scaledPixmap(const Path &path, const QWidget *widget, int height = 0);
-    QPixmap scaledPixmapSvg(const Path &path, const QWidget *widget, int height);
+    class FeedSerializer final : public QObject
+    {
+        Q_OBJECT
+        Q_DISABLE_COPY_MOVE(FeedSerializer)
 
-    QSize smallIconSize(const QWidget *widget = nullptr);
-    QSize mediumIconSize(const QWidget *widget = nullptr);
-    QSize largeIconSize(const QWidget *widget = nullptr);
+    public:
+        using QObject::QObject;
 
-    QPoint screenCenter(const QWidget *w);
+        void load(const Path &dataFileName, const QString &url);
+        void store(const Path &dataFileName, const QVector<QVariantHash> &articlesData);
 
-    void openPath(const Path &path);
-    void openFolderSelect(const Path &path);
+    signals:
+        void loadingFinished(const QVector<QVariantHash> &articles);
+
+    private:
+        QVector<QVariantHash> loadArticles(const QByteArray &data, const QString &url);
+    };
 }
