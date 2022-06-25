@@ -31,6 +31,7 @@
 #include "appcontroller.h"
 
 #include <algorithm>
+#include <chrono>
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -61,6 +62,8 @@
 #include "base/utils/string.h"
 #include "base/version.h"
 #include "../webapplication.h"
+
+using namespace std::chrono_literals;
 
 void AppController::webapiVersionAction()
 {
@@ -93,7 +96,7 @@ void AppController::shutdownAction()
     // Special case handling for shutdown, we
     // need to reply to the Web UI before
     // actually shutting down.
-    QTimer::singleShot(100, qApp, &QCoreApplication::quit);
+    QTimer::singleShot(100ms, qApp, &QCoreApplication::quit);
 }
 
 void AppController::preferencesAction()
@@ -291,7 +294,7 @@ void AppController::preferencesAction()
     // Advanced settings
     // qBitorrent preferences
     // Physical memory (RAM) usage limit
-    data[u"memory_working_set_limit"_qs] = dynamic_cast<IApplication *>(QCoreApplication::instance())->memoryWorkingSetLimit();
+    data[u"memory_working_set_limit"_qs] = app()->memoryWorkingSetLimit();
     // Current network interface
     data[u"current_network_interface"_qs] = session->networkInterface();
     // Current network interface address
@@ -755,7 +758,7 @@ void AppController::setPreferencesAction()
     // qBittorrent preferences
     // Physical memory (RAM) usage limit
     if (hasKey(u"memory_working_set_limit"_qs))
-        dynamic_cast<IApplication *>(QCoreApplication::instance())->setMemoryWorkingSetLimit(it.value().toInt());
+        app()->setMemoryWorkingSetLimit(it.value().toInt());
     // Current network interface
     if (hasKey(u"current_network_interface"_qs))
     {

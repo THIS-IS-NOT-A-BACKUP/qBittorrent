@@ -138,8 +138,9 @@ namespace
 #endif
 }
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(IGUIApplication *app, QWidget *parent)
     : QMainWindow(parent)
+    , GUIApplicationComponent(app)
     , m_ui(new Ui::MainWindow)
     , m_storeExecutionLogEnabled(EXECUTIONLOG_SETTINGS_KEY(u"Enabled"_qs))
     , m_storeDownloadTrackerFavicon(SETTINGS_KEY(u"DownloadTrackerFavicon"_qs))
@@ -1762,7 +1763,7 @@ void MainWindow::createTrayIcon(const int retries)
         if (retries > 0)
         {
             LogMsg(tr("System tray icon is not available, retrying..."), Log::WARNING);
-            QTimer::singleShot(std::chrono::seconds(2), this, [this, retries]()
+            QTimer::singleShot(2s, this, [this, retries]()
             {
                 if (Preferences::instance()->systemTrayEnabled())
                     createTrayIcon(retries - 1);
@@ -1833,7 +1834,7 @@ void MainWindow::on_actionOptions_triggered()
     }
     else
     {
-        m_options = new OptionsDialog(this);
+        m_options = new OptionsDialog(app(), this);
         m_options->setAttribute(Qt::WA_DeleteOnClose);
         m_options->open();
     }

@@ -38,6 +38,7 @@
 #include "base/bittorrent/torrent.h"
 #include "base/logger.h"
 #include "base/settingvalue.h"
+#include "guiapplicationcomponent.h"
 
 class QCloseEvent;
 class QFileSystemWatcher;
@@ -71,13 +72,13 @@ namespace Ui
     class MainWindow;
 }
 
-class MainWindow final : public QMainWindow
+class MainWindow final : public QMainWindow, public GUIApplicationComponent
 {
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(MainWindow)
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(IGUIApplication *app, QWidget *parent = nullptr);
     ~MainWindow() override;
 
     QWidget *currentTabWidget() const;
@@ -219,9 +220,9 @@ private:
     void showStatusBar(bool show);
     void showFiltersSidebar(bool show);
 
-    Ui::MainWindow *m_ui;
+    Ui::MainWindow *m_ui = nullptr;
 
-    QFileSystemWatcher *m_executableWatcher;
+    QFileSystemWatcher *m_executableWatcher = nullptr;
     // GUI related
     bool m_posInitialized = false;
     QPointer<QTabWidget> m_tabs;
@@ -237,27 +238,27 @@ private:
 #endif
     QPointer<QMenu> m_trayIconMenu;
 
-    TransferListWidget *m_transferListWidget;
+    TransferListWidget *m_transferListWidget = nullptr;
     TransferListFiltersWidget *m_transferListFiltersWidget = nullptr;
-    PropertiesWidget *m_propertiesWidget;
-    bool m_displaySpeedInTitle;
+    PropertiesWidget *m_propertiesWidget = nullptr;
+    bool m_displaySpeedInTitle = false;
     bool m_forceExit = false;
-    bool m_uiLocked;
+    bool m_uiLocked = false;
     bool m_unlockDlgShowing = false;
-    LineEdit *m_searchFilter;
-    QAction *m_searchFilterAction;
+    LineEdit *m_searchFilter = nullptr;
+    QAction *m_searchFilterAction = nullptr;
     // Widgets
-    QAction *m_queueSeparator;
-    QAction *m_queueSeparatorMenu;
-    QSplitter *m_splitter;
+    QAction *m_queueSeparator = nullptr;
+    QAction *m_queueSeparatorMenu = nullptr;
+    QSplitter *m_splitter = nullptr;
     QPointer<SearchWidget> m_searchWidget;
     QPointer<RSSWidget> m_rssWidget;
     QPointer<ExecutionLogWidget> m_executionLog;
     // Power Management
-    PowerManagement *m_pwr;
-    QTimer *m_preventTimer;
+    PowerManagement *m_pwr = nullptr;
+    QTimer *m_preventTimer = nullptr;
     bool m_hasPython = false;
-    QMenu *m_toolbarMenu;
+    QMenu *m_toolbarMenu = nullptr;
 
     SettingValue<bool> m_storeExecutionLogEnabled;
     SettingValue<bool> m_storeDownloadTrackerFavicon;
