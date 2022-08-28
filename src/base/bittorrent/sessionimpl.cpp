@@ -43,6 +43,7 @@
 #include <iphlpapi.h>
 #endif
 
+#include <libtorrent/add_torrent_params.hpp>
 #include <libtorrent/alert_types.hpp>
 #include <libtorrent/error_code.hpp>
 #include <libtorrent/extensions/smart_ban.hpp>
@@ -1415,7 +1416,13 @@ void SessionImpl::initializeNativeSession()
         break;
     }
 #endif
+
+#if LIBTORRENT_VERSION_NUM < 20100
     m_nativeSession = new lt::session(sessionParams, lt::session::paused);
+#else
+    m_nativeSession = new lt::session(sessionParams);
+    m_nativeSession->pause();
+#endif
 
     LogMsg(tr("Peer ID: \"%1\"").arg(QString::fromStdString(peerId)), Log::INFO);
     LogMsg(tr("HTTP User-Agent: \"%1\"").arg(USER_AGENT), Log::INFO);
