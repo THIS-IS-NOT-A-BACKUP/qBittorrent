@@ -578,6 +578,29 @@ SessionImpl::SessionImpl(QObject *parent)
     prepareStartup();
 }
 
+SessionImpl::~SessionImpl()
+{
+    // Do some bittorrent related saving
+    // After this, (ideally) no more important alerts will be generated/handled
+    saveResumeData();
+
+    saveStatistics();
+
+    // We must delete FilterParserThread
+    // before we delete lt::session
+    delete m_filterParser;
+
+    // We must delete PortForwarderImpl before
+    // we delete lt::session
+    delete Net::PortForwarder::instance();
+
+    qDebug("Deleting the session");
+    delete m_nativeSession;
+
+    m_ioThread->quit();
+    m_ioThread->wait();
+}
+
 bool SessionImpl::isDHTEnabled() const
 {
     return m_isDHTEnabled;
@@ -1028,30 +1051,6 @@ void SessionImpl::setGlobalMaxSeedingMinutes(int minutes)
     }
 }
 
-// Main destructor
-SessionImpl::~SessionImpl()
-{
-    // Do some bittorrent related saving
-    // After this, (ideally) no more important alerts will be generated/handled
-    saveResumeData();
-
-    saveStatistics();
-
-    // We must delete FilterParserThread
-    // before we delete lt::session
-    delete m_filterParser;
-
-    // We must delete PortForwarderImpl before
-    // we delete lt::session
-    delete Net::PortForwarder::instance();
-
-    qDebug("Deleting the session");
-    delete m_nativeSession;
-
-    m_ioThread->quit();
-    m_ioThread->wait();
-}
-
 void SessionImpl::adjustLimits()
 {
     if (isQueueingSystemEnabled())
@@ -1388,7 +1387,7 @@ void SessionImpl::endStartup(ResumeSessionContext *context)
             saveTorrentsQueue();
 
         const Path dbPath = context->startupStorage->path();
-        delete context->startupStorage;
+        context->startupStorage->deleteLater();
 
         if (context->currentStorageType == ResumeDataStorageType::Legacy)
             Utils::Fs::removeFile(dbPath);
