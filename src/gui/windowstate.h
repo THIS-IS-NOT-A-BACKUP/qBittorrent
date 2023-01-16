@@ -1,6 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2015-2022  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2022  Vladimir Golovnev <glassez@yandex.ru>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,52 +26,21 @@
  * exception statement from your version.
  */
 
-#include "resumedatastorage.h"
-
-#include <utility>
+#pragma once
 
 #include <QMetaObject>
-#include <QMutexLocker>
-#include <QThread>
-#include <QVector>
 
-const int TORRENTIDLIST_TYPEID = qRegisterMetaType<QVector<BitTorrent::TorrentID>>();
-
-BitTorrent::ResumeDataStorage::ResumeDataStorage(const Path &path, QObject *parent)
-    : QObject(parent)
-    , m_path {path}
+inline namespace WindowStateNS
 {
-}
+    Q_NAMESPACE
 
-Path BitTorrent::ResumeDataStorage::path() const
-{
-    return m_path;
-}
-
-void BitTorrent::ResumeDataStorage::loadAll() const
-{
-    m_loadedResumeData.reserve(1024);
-
-    auto *loadingThread = QThread::create([this]()
+    enum class WindowState
     {
-        doLoadAll();
-    });
-    connect(loadingThread, &QThread::finished, loadingThread, &QObject::deleteLater);
-    loadingThread->start();
-}
-
-QList<BitTorrent::LoadedResumeData> BitTorrent::ResumeDataStorage::fetchLoadedResumeData() const
-{
-    const QMutexLocker locker {&m_loadedResumeDataMutex};
-
-    const QList<BitTorrent::LoadedResumeData> loadedResumeData = m_loadedResumeData;
-    m_loadedResumeData.clear();
-
-    return loadedResumeData;
-}
-
-void BitTorrent::ResumeDataStorage::onResumeDataLoaded(const TorrentID &torrentID, const LoadResumeDataResult &loadResumeDataResult) const
-{
-    const QMutexLocker locker {&m_loadedResumeDataMutex};
-    m_loadedResumeData.append({torrentID, loadResumeDataResult});
+        Normal,
+        Minimized,
+#ifndef Q_OS_MACOS
+        Hidden
+#endif
+    };
+    Q_ENUM_NS(WindowState);
 }
