@@ -107,9 +107,23 @@ void AppController::preferencesAction()
 
     QJsonObject data;
 
+    // Behavior
+    // Language
+    data[u"locale"_qs] = pref->getLocale();
+    data[u"performance_warning"_qs] = session->isPerformanceWarningEnabled();
+    // Log file
+    data[u"file_log_enabled"_qs] = app()->isFileLoggerEnabled();
+    data[u"file_log_path"_qs] = app()->fileLoggerPath().toString();
+    data[u"file_log_backup_enabled"_qs] = app()->isFileLoggerBackup();
+    data[u"file_log_max_size"_qs] = app()->fileLoggerMaxSize() / 1024;
+    data[u"file_log_delete_old"_qs] = app()->isFileLoggerDeleteOld();
+    data[u"file_log_age"_qs] = app()->fileLoggerAge();
+    data[u"file_log_age_type"_qs] = app()->fileLoggerAgeType();
+
     // Downloads
     // When adding a torrent
     data[u"torrent_content_layout"_qs] = Utils::String::fromEnum(session->torrentContentLayout());
+    data[u"add_to_top_of_queue"_qs] = session->isAddTorrentToQueueTop();
     data[u"start_paused_enabled"_qs] = session->isAddTorrentPaused();
     data[u"torrent_stop_condition"_qs] = Utils::String::fromEnum(session->torrentStopCondition());
     data[u"auto_delete_mode"_qs] = static_cast<int>(TorrentFileGuard::autoDeleteMode());
@@ -246,9 +260,6 @@ void AppController::preferencesAction()
     data[u"add_trackers"_qs] = session->additionalTrackers();
 
     // Web UI
-    // Language
-    data[u"locale"_qs] = pref->getLocale();
-    data[u"performance_warning"_qs] = session->isPerformanceWarningEnabled();
     // HTTP Server
     data[u"web_ui_domain_list"_qs] = pref->getServerDomains();
     data[u"web_ui_address"_qs] = pref->getWebUiAddress();
@@ -410,10 +421,51 @@ void AppController::setPreferencesAction()
         return (it != m.constEnd());
     };
 
+    // Behavior
+    // Language
+    if (hasKey(u"locale"_qs))
+    {
+        QString locale = it.value().toString();
+        if (pref->getLocale() != locale)
+        {
+            auto *translator = new QTranslator;
+            if (translator->load(u":/lang/qbittorrent_"_qs + locale))
+            {
+                qDebug("%s locale recognized, using translation.", qUtf8Printable(locale));
+            }
+            else
+            {
+                qDebug("%s locale unrecognized, using default (en).", qUtf8Printable(locale));
+            }
+            qApp->installTranslator(translator);
+
+            pref->setLocale(locale);
+        }
+    }
+    if (hasKey(u"performance_warning"_qs))
+        session->setPerformanceWarningEnabled(it.value().toBool());
+    // Log file
+    if (hasKey(u"file_log_enabled"_qs))
+        app()->setFileLoggerEnabled(it.value().toBool());
+    if (hasKey(u"file_log_path"_qs))
+        app()->setFileLoggerPath(Path(it.value().toString()));
+    if (hasKey(u"file_log_backup_enabled"_qs))
+        app()->setFileLoggerBackup(it.value().toBool());
+    if (hasKey(u"file_log_max_size"_qs))
+        app()->setFileLoggerMaxSize(it.value().toInt() * 1024);
+    if (hasKey(u"file_log_delete_old"_qs))
+        app()->setFileLoggerDeleteOld(it.value().toBool());
+    if (hasKey(u"file_log_age"_qs))
+        app()->setFileLoggerAge(it.value().toInt());
+    if (hasKey(u"file_log_age_type"_qs))
+        app()->setFileLoggerAgeType(it.value().toInt());
+
     // Downloads
     // When adding a torrent
     if (hasKey(u"torrent_content_layout"_qs))
         session->setTorrentContentLayout(Utils::String::toEnum(it.value().toString(), BitTorrent::TorrentContentLayout::Original));
+    if (hasKey(u"add_to_top_of_queue"_qs))
+        session->setAddTorrentToQueueTop(it.value().toBool());
     if (hasKey(u"start_paused_enabled"_qs))
         session->setAddTorrentPaused(it.value().toBool());
     if (hasKey(u"torrent_stop_condition"_qs))
@@ -670,28 +722,6 @@ void AppController::setPreferencesAction()
         session->setAdditionalTrackers(it.value().toString());
 
     // Web UI
-    // Language
-    if (hasKey(u"locale"_qs))
-    {
-        QString locale = it.value().toString();
-        if (pref->getLocale() != locale)
-        {
-            auto *translator = new QTranslator;
-            if (translator->load(u":/lang/qbittorrent_"_qs + locale))
-            {
-                qDebug("%s locale recognized, using translation.", qUtf8Printable(locale));
-            }
-            else
-            {
-                qDebug("%s locale unrecognized, using default (en).", qUtf8Printable(locale));
-            }
-            qApp->installTranslator(translator);
-
-            pref->setLocale(locale);
-        }
-    }
-    if (hasKey(u"performance_warning"_qs))
-        session->setPerformanceWarningEnabled(it.value().toBool());
     // HTTP Server
     if (hasKey(u"web_ui_domain_list"_qs))
         pref->setServerDomains(it.value().toString());

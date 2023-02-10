@@ -206,6 +206,8 @@ namespace BitTorrent
         virtual void setLSDEnabled(bool enabled) = 0;
         virtual bool isPeXEnabled() const = 0;
         virtual void setPeXEnabled(bool enabled) = 0;
+        virtual bool isAddTorrentToQueueTop() const = 0;
+        virtual void setAddTorrentToQueueTop(bool value) = 0;
         virtual bool isAddTorrentPaused() const = 0;
         virtual void setAddTorrentPaused(bool value) = 0;
         virtual Torrent::StopCondition torrentStopCondition() const = 0;
@@ -431,6 +433,7 @@ namespace BitTorrent
         void allTorrentsFinished();
         void categoryAdded(const QString &categoryName);
         void categoryRemoved(const QString &categoryName);
+        void categoryOptionsChanged(const QString &categoryName);
         void downloadFromUrlFailed(const QString &url, const QString &reason);
         void downloadFromUrlFinished(const QString &url);
         void fullDiskError(Torrent *torrent, const QString &msg);
