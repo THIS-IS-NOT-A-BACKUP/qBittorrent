@@ -36,6 +36,7 @@ qt_wrap_ui(UI_HEADERS
     torrentcategorydialog.ui
     torrentcreatordialog.ui
     torrentoptionsdialog.ui
+    torrenttagsdialog.ui
     trackerentriesdialog.ui
     uithemedialog.ui
     watchedfolderoptionsdialog.ui
@@ -48,9 +49,6 @@ add_library(qbt_gui STATIC
     advancedsettings.h
     autoexpandabledialog.h
     banlistoptionsdialog.h
-    categoryfiltermodel.h
-    categoryfilterproxymodel.h
-    categoryfilterwidget.h
     color.h
     cookiesdialog.h
     cookiesmodel.h
@@ -58,6 +56,7 @@ add_library(qbt_gui STATIC
     desktopintegration.h
     downloadfromurldialog.h
     executionlogwidget.h
+    flowlayout.h
     fspathedit.h
     fspathedit_p.h
     guiapplicationcomponent.h
@@ -101,9 +100,6 @@ add_library(qbt_gui STATIC
     speedlimitdialog.h
     statsdialog.h
     statusbar.h
-    tagfiltermodel.h
-    tagfilterproxymodel.h
-    tagfilterwidget.h
     torrentcategorydialog.h
     torrentcontentfiltermodel.h
     torrentcontentitemdelegate.h
@@ -114,8 +110,18 @@ add_library(qbt_gui STATIC
     torrentcontentwidget.h
     torrentcreatordialog.h
     torrentoptionsdialog.h
+    torrenttagsdialog.h
     trackerentriesdialog.h
     transferlistdelegate.h
+    transferlistfilters/basefilterwidget.h
+    transferlistfilters/categoryfiltermodel.h
+    transferlistfilters/categoryfilterproxymodel.h
+    transferlistfilters/categoryfilterwidget.h
+    transferlistfilters/statusfilterwidget.h
+    transferlistfilters/tagfiltermodel.h
+    transferlistfilters/tagfilterproxymodel.h
+    transferlistfilters/tagfilterwidget.h
+    transferlistfilters/trackersfilterwidget.h
     transferlistfilterswidget.h
     transferlistmodel.h
     transferlistsortmodel.h
@@ -137,15 +143,13 @@ add_library(qbt_gui STATIC
     advancedsettings.cpp
     autoexpandabledialog.cpp
     banlistoptionsdialog.cpp
-    categoryfiltermodel.cpp
-    categoryfilterproxymodel.cpp
-    categoryfilterwidget.cpp
     cookiesdialog.cpp
     cookiesmodel.cpp
     deletionconfirmationdialog.cpp
     desktopintegration.cpp
     downloadfromurldialog.cpp
     executionlogwidget.cpp
+    flowlayout.cpp
     fspathedit.cpp
     fspathedit_p.cpp
     guiapplicationcomponent.cpp
@@ -188,9 +192,6 @@ add_library(qbt_gui STATIC
     speedlimitdialog.cpp
     statsdialog.cpp
     statusbar.cpp
-    tagfiltermodel.cpp
-    tagfilterproxymodel.cpp
-    tagfilterwidget.cpp
     torrentcategorydialog.cpp
     torrentcontentfiltermodel.cpp
     torrentcontentitemdelegate.cpp
@@ -201,8 +202,18 @@ add_library(qbt_gui STATIC
     torrentcontentwidget.cpp
     torrentcreatordialog.cpp
     torrentoptionsdialog.cpp
+    torrenttagsdialog.cpp
     trackerentriesdialog.cpp
     transferlistdelegate.cpp
+    transferlistfilters/basefilterwidget.cpp
+    transferlistfilters/categoryfiltermodel.cpp
+    transferlistfilters/categoryfilterproxymodel.cpp
+    transferlistfilters/categoryfilterwidget.cpp
+    transferlistfilters/statusfilterwidget.cpp
+    transferlistfilters/tagfiltermodel.cpp
+    transferlistfilters/tagfilterproxymodel.cpp
+    transferlistfilters/tagfilterwidget.cpp
+    transferlistfilters/trackersfilterwidget.cpp
     transferlistfilterswidget.cpp
     transferlistmodel.cpp
     transferlistsortmodel.cpp

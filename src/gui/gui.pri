@@ -6,9 +6,6 @@ HEADERS += \
     $$PWD/advancedsettings.h \
     $$PWD/autoexpandabledialog.h \
     $$PWD/banlistoptionsdialog.h \
-    $$PWD/categoryfiltermodel.h \
-    $$PWD/categoryfilterproxymodel.h \
-    $$PWD/categoryfilterwidget.h \
     $$PWD/color.h \
     $$PWD/cookiesdialog.h \
     $$PWD/cookiesmodel.h \
@@ -16,6 +13,7 @@ HEADERS += \
     $$PWD/desktopintegration.h \
     $$PWD/downloadfromurldialog.h \
     $$PWD/executionlogwidget.h \
+    $$PWD/flowlayout.h \
     $$PWD/fspathedit.h \
     $$PWD/fspathedit_p.h \
     $$PWD/guiapplicationcomponent.h \
@@ -59,9 +57,6 @@ HEADERS += \
     $$PWD/speedlimitdialog.h \
     $$PWD/statsdialog.h \
     $$PWD/statusbar.h \
-    $$PWD/tagfiltermodel.h \
-    $$PWD/tagfilterproxymodel.h \
-    $$PWD/tagfilterwidget.h \
     $$PWD/torrentcategorydialog.h \
     $$PWD/torrentcontentfiltermodel.h \
     $$PWD/torrentcontentitemdelegate.h \
@@ -72,8 +67,18 @@ HEADERS += \
     $$PWD/torrentcontentwidget.h \
     $$PWD/torrentcreatordialog.h \
     $$PWD/torrentoptionsdialog.h \
+    $$PWD/torrenttagsdialog.h \
     $$PWD/trackerentriesdialog.h \
     $$PWD/transferlistdelegate.h \
+    $$PWD/transferlistfilters/basefilterwidget.h \
+    $$PWD/transferlistfilters/categoryfiltermodel.h \
+    $$PWD/transferlistfilters/categoryfilterproxymodel.h \
+    $$PWD/transferlistfilters/categoryfilterwidget.h \
+    $$PWD/transferlistfilters/statusfilterwidget.h \
+    $$PWD/transferlistfilters/tagfiltermodel.h \
+    $$PWD/transferlistfilters/tagfilterproxymodel.h \
+    $$PWD/transferlistfilters/tagfilterwidget.h \
+    $$PWD/transferlistfilters/trackersfilterwidget.h \
     $$PWD/transferlistfilterswidget.h \
     $$PWD/transferlistmodel.h \
     $$PWD/transferlistsortmodel.h \
@@ -95,15 +100,13 @@ SOURCES += \
     $$PWD/advancedsettings.cpp \
     $$PWD/autoexpandabledialog.cpp \
     $$PWD/banlistoptionsdialog.cpp \
-    $$PWD/categoryfiltermodel.cpp \
-    $$PWD/categoryfilterproxymodel.cpp \
-    $$PWD/categoryfilterwidget.cpp \
     $$PWD/cookiesdialog.cpp \
     $$PWD/cookiesmodel.cpp \
     $$PWD/deletionconfirmationdialog.cpp \
     $$PWD/desktopintegration.cpp \
     $$PWD/downloadfromurldialog.cpp \
     $$PWD/executionlogwidget.cpp \
+    $$PWD/flowlayout.cpp \
     $$PWD/fspathedit.cpp \
     $$PWD/fspathedit_p.cpp \
     $$PWD/guiapplicationcomponent.cpp \
@@ -146,9 +149,6 @@ SOURCES += \
     $$PWD/speedlimitdialog.cpp \
     $$PWD/statsdialog.cpp \
     $$PWD/statusbar.cpp \
-    $$PWD/tagfiltermodel.cpp \
-    $$PWD/tagfilterproxymodel.cpp \
-    $$PWD/tagfilterwidget.cpp \
     $$PWD/torrentcategorydialog.cpp \
     $$PWD/torrentcontentfiltermodel.cpp \
     $$PWD/torrentcontentitemdelegate.cpp \
@@ -159,8 +159,18 @@ SOURCES += \
     $$PWD/torrentcontentwidget.cpp \
     $$PWD/torrentcreatordialog.cpp \
     $$PWD/torrentoptionsdialog.cpp \
+    $$PWD/torrenttagsdialog.cpp \
     $$PWD/trackerentriesdialog.cpp \
     $$PWD/transferlistdelegate.cpp \
+    $$PWD/transferlistfilters/basefilterwidget.cpp \
+    $$PWD/transferlistfilters/categoryfiltermodel.cpp \
+    $$PWD/transferlistfilters/categoryfilterproxymodel.cpp \
+    $$PWD/transferlistfilters/categoryfilterwidget.cpp \
+    $$PWD/transferlistfilters/statusfilterwidget.cpp \
+    $$PWD/transferlistfilters/tagfiltermodel.cpp \
+    $$PWD/transferlistfilters/tagfilterproxymodel.cpp \
+    $$PWD/transferlistfilters/tagfilterwidget.cpp \
+    $$PWD/transferlistfilters/trackersfilterwidget.cpp \
     $$PWD/transferlistfilterswidget.cpp \
     $$PWD/transferlistmodel.cpp \
     $$PWD/transferlistsortmodel.cpp \
@@ -202,6 +212,7 @@ FORMS += \
     $$PWD/torrentcategorydialog.ui \
     $$PWD/torrentcreatordialog.ui \
     $$PWD/torrentoptionsdialog.ui \
+    $$PWD/torrenttagsdialog.ui \
     $$PWD/trackerentriesdialog.ui \
     $$PWD/uithemedialog.ui \
     $$PWD/watchedfolderoptionsdialog.ui
