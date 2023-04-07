@@ -52,7 +52,7 @@
 #include "base/utils/version.h"
 #include "api/isessionmanager.h"
 
-inline const Utils::Version<3, 2> API_VERSION {2, 9, 0};
+inline const Utils::Version<3, 2> API_VERSION {2, 9, 1};
 
 class APIController;
 class AuthController;
@@ -148,6 +148,7 @@ private:
         {{u"auth"_qs, u"login"_qs}, Http::METHOD_POST},
         {{u"auth"_qs, u"logout"_qs}, Http::METHOD_POST},
         {{u"rss"_qs, u"addFeed"_qs}, Http::METHOD_POST},
+        {{u"rss"_qs, u"setFeedURL"_qs}, Http::METHOD_POST},
         {{u"rss"_qs, u"addFolder"_qs}, Http::METHOD_POST},
         {{u"rss"_qs, u"markAsRead"_qs}, Http::METHOD_POST},
         {{u"rss"_qs, u"moveItem"_qs}, Http::METHOD_POST},
