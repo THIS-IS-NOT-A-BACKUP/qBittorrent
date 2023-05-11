@@ -1470,6 +1470,21 @@ void SessionImpl::endStartup(ResumeSessionContext *context)
             m_resumeDataTimer->start();
         }
 
+        m_wakeupCheckTimer = new QTimer(this);
+        connect(m_wakeupCheckTimer, &QTimer::timeout, this, [this]
+        {
+            const auto now = QDateTime::currentDateTime();
+            if (m_wakeupCheckTimestamp.secsTo(now) > 100)
+            {
+                LogMsg(tr("System wake-up event detected. Re-announcing to all the trackers..."));
+                reannounceToAllTrackers();
+            }
+
+            m_wakeupCheckTimestamp = QDateTime::currentDateTime();
+        });
+        m_wakeupCheckTimestamp = QDateTime::currentDateTime();
+        m_wakeupCheckTimer->start(30s);
+
         m_isRestored = true;
         emit startupProgressUpdated(100);
         emit restored();
@@ -2596,50 +2611,30 @@ LoadTorrentParams SessionImpl::initLoadTorrentParams(const AddTorrentParams &add
     const auto defaultSavePath = suggestedSavePath(loadTorrentParams.category, addTorrentParams.useAutoTMM);
     const auto defaultDownloadPath = suggestedDownloadPath(loadTorrentParams.category, addTorrentParams.useAutoTMM);
 
-    loadTorrentParams.useAutoTMM = addTorrentParams.useAutoTMM.value_or(!isAutoTMMDisabledByDefault());
+    loadTorrentParams.useAutoTMM = addTorrentParams.useAutoTMM.value_or(
+            addTorrentParams.savePath.isEmpty() && addTorrentParams.downloadPath.isEmpty() && !isAutoTMMDisabledByDefault());
 
-    if (!addTorrentParams.useAutoTMM.has_value())
+    if (!loadTorrentParams.useAutoTMM)
     {
-        // Default TMM settings
+        if (addTorrentParams.savePath.isAbsolute())
+            loadTorrentParams.savePath = addTorrentParams.savePath;
+        else
+            loadTorrentParams.savePath = defaultSavePath / addTorrentParams.savePath;
 
-        if (!loadTorrentParams.useAutoTMM)
+        // if useDownloadPath isn't specified but downloadPath is explicitly set we prefer to use it
+        const bool useDownloadPath = addTorrentParams.useDownloadPath.value_or(!addTorrentParams.downloadPath.isEmpty() || isDownloadPathEnabled());
+        if (useDownloadPath)
         {
-            loadTorrentParams.savePath = defaultSavePath;
-            if (isDownloadPathEnabled())
-                loadTorrentParams.downloadPath = (!defaultDownloadPath.isEmpty() ? defaultDownloadPath : downloadPath());
-        }
-    }
-    else
-    {
-        // Overridden TMM settings
+            // Overridden "Download path" settings
 
-        if (!loadTorrentParams.useAutoTMM)
-        {
-            if (addTorrentParams.savePath.isAbsolute())
-                loadTorrentParams.savePath = addTorrentParams.savePath;
-            else
-                loadTorrentParams.savePath = defaultSavePath / addTorrentParams.savePath;
-
-            if (!addTorrentParams.useDownloadPath.has_value())
+            if (addTorrentParams.downloadPath.isAbsolute())
             {
-                // Default "Download path" settings
-
-                if (isDownloadPathEnabled())
-                    loadTorrentParams.downloadPath = (!defaultDownloadPath.isEmpty() ? defaultDownloadPath : downloadPath());
+                loadTorrentParams.downloadPath = addTorrentParams.downloadPath;
             }
-            else if (addTorrentParams.useDownloadPath.value())
+            else
             {
-                // Overridden "Download path" settings
-
-                if (addTorrentParams.downloadPath.isAbsolute())
-                {
-                    loadTorrentParams.downloadPath = addTorrentParams.downloadPath;
-                }
-                else
-                {
-                    const Path basePath = (!defaultDownloadPath.isEmpty() ? defaultDownloadPath : downloadPath());
-                    loadTorrentParams.downloadPath = basePath / addTorrentParams.downloadPath;
-                }
+                const Path basePath = (!defaultDownloadPath.isEmpty() ? defaultDownloadPath : downloadPath());
+                loadTorrentParams.downloadPath = basePath / addTorrentParams.downloadPath;
             }
         }
     }
