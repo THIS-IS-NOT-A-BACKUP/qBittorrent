@@ -416,7 +416,7 @@ SessionImpl::SessionImpl(QObject *parent)
     , m_announceToAllTiers(BITTORRENT_SESSION_KEY(u"AnnounceToAllTiers"_s), true)
     , m_asyncIOThreads(BITTORRENT_SESSION_KEY(u"AsyncIOThreadsCount"_s), 10)
     , m_hashingThreads(BITTORRENT_SESSION_KEY(u"HashingThreadsCount"_s), 1)
-    , m_filePoolSize(BITTORRENT_SESSION_KEY(u"FilePoolSize"_s), 500)
+    , m_filePoolSize(BITTORRENT_SESSION_KEY(u"FilePoolSize"_s), 100)
     , m_checkingMemUsage(BITTORRENT_SESSION_KEY(u"CheckingMemUsageSize"_s), 32)
     , m_diskCacheSize(BITTORRENT_SESSION_KEY(u"DiskCacheSize"_s), -1)
     , m_diskCacheTTL(BITTORRENT_SESSION_KEY(u"DiskCacheTTL"_s), 60)
@@ -456,7 +456,7 @@ SessionImpl::SessionImpl(QObject *parent)
     , m_announceIP(BITTORRENT_SESSION_KEY(u"AnnounceIP"_s))
     , m_maxConcurrentHTTPAnnounces(BITTORRENT_SESSION_KEY(u"MaxConcurrentHTTPAnnounces"_s), 50)
     , m_isReannounceWhenAddressChangedEnabled(BITTORRENT_SESSION_KEY(u"ReannounceWhenAddressChanged"_s), false)
-    , m_stopTrackerTimeout(BITTORRENT_SESSION_KEY(u"StopTrackerTimeout"_s), 5)
+    , m_stopTrackerTimeout(BITTORRENT_SESSION_KEY(u"StopTrackerTimeout"_s), 2)
     , m_maxConnections(BITTORRENT_SESSION_KEY(u"MaxConnections"_s), 500, lowerLimited(0, -1))
     , m_maxUploads(BITTORRENT_SESSION_KEY(u"MaxUploads"_s), 20, lowerLimited(0, -1))
     , m_maxConnectionsPerTorrent(BITTORRENT_SESSION_KEY(u"MaxConnectionsPerTorrent"_s), 100, lowerLimited(0, -1))
@@ -523,6 +523,7 @@ SessionImpl::SessionImpl(QObject *parent)
     , m_excludedFileNames(BITTORRENT_SESSION_KEY(u"ExcludedFileNames"_s))
     , m_bannedIPs(u"State/BannedIPs"_s, QStringList(), Algorithm::sorted<QStringList>)
     , m_resumeDataStorageType(BITTORRENT_SESSION_KEY(u"ResumeDataStorageType"_s), ResumeDataStorageType::Legacy)
+    , m_isMergeTrackersEnabled(BITTORRENT_KEY(u"MergeTrackersEnabled"_s), false)
     , m_isI2PEnabled {BITTORRENT_SESSION_KEY(u"I2P/Enabled"_s), false}
     , m_I2PAddress {BITTORRENT_SESSION_KEY(u"I2P/Address"_s), u"127.0.0.1"_s}
     , m_I2PPort {BITTORRENT_SESSION_KEY(u"I2P/Port"_s), 7656}
@@ -2677,10 +2678,31 @@ bool SessionImpl::addTorrent_impl(const std::variant<MagnetUri, TorrentInfo> &so
 
     if (Torrent *torrent = findTorrent(infoHash); torrent)
     {
+        // a duplicate torrent is being added
+        if (torrent->isPrivate())
+            return false;
+
         if (hasMetadata)
         {
             // Trying to set metadata to existing torrent in case if it has none
             torrent->setMetadata(std::get<TorrentInfo>(source));
+
+            const TorrentInfo &torrentInfo = std::get<TorrentInfo>(source);
+
+            if (torrentInfo.isPrivate())
+                return false;
+
+            // merge trackers and web seeds
+            torrent->addTrackers(torrentInfo.trackers());
+            torrent->addUrlSeeds(torrentInfo.urlSeeds());
+        }
+        else
+        {
+            const MagnetUri &magnetUri = std::get<MagnetUri>(source);
+
+            // merge trackers and web seeds
+            torrent->addTrackers(magnetUri.trackers());
+            torrent->addUrlSeeds(magnetUri.urlSeeds());
         }
 
         return false;
@@ -3902,6 +3924,16 @@ ResumeDataStorageType SessionImpl::resumeDataStorageType() const
 void SessionImpl::setResumeDataStorageType(const ResumeDataStorageType type)
 {
     m_resumeDataStorageType = type;
+}
+
+bool SessionImpl::isMergeTrackersEnabled() const
+{
+    return m_isMergeTrackersEnabled;
+}
+
+void SessionImpl::setMergeTrackersEnabled(const bool enabled)
+{
+    m_isMergeTrackersEnabled = enabled;
 }
 
 QStringList SessionImpl::bannedIPs() const
