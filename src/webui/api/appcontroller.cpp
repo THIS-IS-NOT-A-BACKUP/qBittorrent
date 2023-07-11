@@ -320,10 +320,14 @@ void AppController::preferencesAction()
     data[u"memory_working_set_limit"_s] = app()->memoryWorkingSetLimit();
     // Current network interface
     data[u"current_network_interface"_s] = session->networkInterface();
+    // Current network interface name
+    data[u"current_interface_name"_s] = session->networkInterfaceName();
     // Current network interface address
-    data[u"current_interface_address"_s] = BitTorrent::Session::instance()->networkInterfaceAddress();
+    data[u"current_interface_address"_s] = session->networkInterfaceAddress();
     // Save resume data interval
     data[u"save_resume_data_interval"_s] = session->saveResumeDataInterval();
+    // .torrent file size limit
+    data[u"torrent_file_size_limit"_s] = pref->getTorrentFileSizeLimit();
     // Recheck completed torrents
     data[u"recheck_completed_torrents"_s] = pref->recheckTorrentsOnCompletion();
     // Refresh interval
@@ -334,6 +338,10 @@ void AppController::preferencesAction()
     data[u"reannounce_when_address_changed"_s] = session->isReannounceWhenAddressChangedEnabled();
 
     // libtorrent preferences
+    // Bdecode depth limit
+    data[u"bdecode_depth_limit"_s] = pref->getBdecodeDepthLimit();
+    // Bdecode token limit
+    data[u"bdecode_token_limit"_s] = pref->getBdecodeTokenLimit();
     // Async IO threads
     data[u"async_io_threads"_s] = session->asyncIOThreads();
     // Hashing threads
@@ -845,7 +853,8 @@ void AppController::setPreferencesAction()
         const QString ifaceName = (ifacesIter != ifaces.cend()) ? ifacesIter->humanReadableName() : QString {};
 
         session->setNetworkInterface(ifaceValue);
-        session->setNetworkInterfaceName(ifaceName);
+        if (!ifaceName.isEmpty() || ifaceValue.isEmpty())
+            session->setNetworkInterfaceName(ifaceName);
     }
     // Current network interface address
     if (hasKey(u"current_interface_address"_s))
@@ -856,6 +865,9 @@ void AppController::setPreferencesAction()
     // Save resume data interval
     if (hasKey(u"save_resume_data_interval"_s))
         session->setSaveResumeDataInterval(it.value().toInt());
+    // .torrent file size limit
+    if (hasKey(u"torrent_file_size_limit"_s))
+        pref->setTorrentFileSizeLimit(it.value().toLongLong());
     // Recheck completed torrents
     if (hasKey(u"recheck_completed_torrents"_s))
         pref->recheckTorrentsOnCompletion(it.value().toBool());
@@ -870,6 +882,12 @@ void AppController::setPreferencesAction()
         session->setReannounceWhenAddressChangedEnabled(it.value().toBool());
 
     // libtorrent preferences
+    // Bdecode depth limit
+    if (hasKey(u"bdecode_depth_limit"_s))
+        pref->setBdecodeDepthLimit(it.value().toInt());
+    // Bdecode token limit
+    if (hasKey(u"bdecode_token_limit"_s))
+        pref->setBdecodeTokenLimit(it.value().toInt());
     // Async IO threads
     if (hasKey(u"async_io_threads"_s))
         session->setAsyncIOThreads(it.value().toInt());
