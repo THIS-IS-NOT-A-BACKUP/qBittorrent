@@ -50,6 +50,7 @@
 #include <QStringList>
 #include <QUrl>
 
+#include "base/exceptions.h"
 #include "base/global.h"
 #include "base/logger.h"
 #include "base/preferences.h"
@@ -1598,7 +1599,8 @@ void TorrentImpl::applyFirstLastPiecePriority(const bool enabled)
 
 void TorrentImpl::fileSearchFinished(const Path &savePath, const PathList &fileNames)
 {
-    endReceivedMetadataHandling(savePath, fileNames);
+    if (m_maintenanceJob == MaintenanceJob::HandleMetadata)
+        endReceivedMetadataHandling(savePath, fileNames);
 }
 
 TrackerEntry TorrentImpl::updateTrackerEntry(const lt::announce_entry &announceEntry, const QMap<TrackerEntry::Endpoint, int> &updateInfo)
@@ -1630,7 +1632,13 @@ std::shared_ptr<const libtorrent::torrent_info> TorrentImpl::nativeTorrentInfo()
 
 void TorrentImpl::endReceivedMetadataHandling(const Path &savePath, const PathList &fileNames)
 {
+    Q_ASSERT(m_maintenanceJob == MaintenanceJob::HandleMetadata);
+    if (m_maintenanceJob != MaintenanceJob::HandleMetadata) [[unlikely]]
+        return;
+
     Q_ASSERT(m_filePaths.isEmpty());
+    if (!m_filePaths.isEmpty()) [[unlikely]]
+        m_filePaths.clear();
 
     lt::add_torrent_params &p = m_ltAddTorrentParams;
 
@@ -1639,7 +1647,7 @@ void TorrentImpl::endReceivedMetadataHandling(const Path &savePath, const PathLi
     m_filePriorities.reserve(filesCount());
     const auto nativeIndexes = m_torrentInfo.nativeIndexes();
     p.file_priorities = resized(p.file_priorities, metadata->files().num_files()
-                                , LT::toNative(p.file_priorities.empty() ? DownloadPriority::Normal : DownloadPriority::Ignored));
+            , LT::toNative(p.file_priorities.empty() ? DownloadPriority::Normal : DownloadPriority::Ignored));
 
     m_completedFiles.fill(static_cast<bool>(p.flags & lt::torrent_flags::seed_mode), filesCount());
     m_filesProgress.resize(filesCount());
@@ -1689,6 +1697,7 @@ void TorrentImpl::endReceivedMetadataHandling(const Path &savePath, const PathLi
 }
 
 void TorrentImpl::reload()
+try
 {
     m_completedFiles.fill(false);
     m_filesProgress.fill(0);
@@ -1730,6 +1739,11 @@ void TorrentImpl::reload()
     m_nativeStatus.queue_position = queuePos;
 
     updateState();
+}
+catch (const lt::system_error &err)
+{
+    throw RuntimeError(tr("Failed to reload torrent. Torrent: %1. Reason: %2")
+            .arg(id().toString(), QString::fromLocal8Bit(err.what())));
 }
 
 void TorrentImpl::pause()
