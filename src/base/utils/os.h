@@ -1,6 +1,8 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2015  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2023  Mike Tzou (Chocobo1)
+ * Copyright (C) 2014  sledgehammer999 <hammered999@gmail.com>
+ * Copyright (C) 2006  Christophe Dumez <chris@qbittorrent.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,48 +30,21 @@
 
 #pragma once
 
-#include <QHostAddress>
-#include <QObject>
-#include <QPointer>
+#include <QtSystemDetection>
 
-#include "base/applicationcomponent.h"
-
-namespace Http
+namespace Utils::OS
 {
-    class Server;
+#ifdef Q_OS_MACOS
+    bool isTorrentFileAssocSet();
+    void setTorrentFileAssoc();
+    bool isMagnetLinkAssocSet();
+    void setMagnetLinkAssoc();
+#endif // Q_OS_MACOS
+
+#ifdef Q_OS_WIN
+    bool isTorrentFileAssocSet();
+    void setTorrentFileAssoc(bool set);
+    bool isMagnetLinkAssocSet();
+    void setMagnetLinkAssoc(bool set);
+#endif // Q_OS_WIN
 }
-
-namespace Net
-{
-    class DNSUpdater;
-}
-
-class WebApplication;
-
-class WebUI final : public ApplicationComponent<QObject>
-{
-    Q_OBJECT
-    Q_DISABLE_COPY_MOVE(WebUI)
-
-public:
-    explicit WebUI(IApplication *app);
-
-    bool isEnabled() const;
-    bool isErrored() const;
-    bool isHttps() const;
-    QHostAddress hostAddress() const;
-    quint16 port() const;
-
-signals:
-    void fatalError();
-
-private slots:
-    void configure();
-
-private:
-    bool m_isEnabled = false;
-    bool m_isErrored = false;
-    QPointer<Http::Server> m_httpServer;
-    QPointer<Net::DNSUpdater> m_dnsUpdater;
-    QPointer<WebApplication> m_webapp;
-};

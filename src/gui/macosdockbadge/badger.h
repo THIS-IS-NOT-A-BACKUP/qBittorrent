@@ -1,6 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2015  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2023  Nick Korotysh <nick.korotysh@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,48 +28,21 @@
 
 #pragma once
 
-#include <QHostAddress>
-#include <QObject>
-#include <QPointer>
+#include <cstdint>
+#include <memory>
 
-#include "base/applicationcomponent.h"
-
-namespace Http
+namespace MacUtils
 {
-    class Server;
+    class Badger final
+    {
+    public:
+        Badger();
+        ~Badger();
+
+        void updateSpeed(int64_t dlRate, int64_t ulRate);
+
+    private:
+        struct Impl;
+        std::unique_ptr<Impl> m_impl;
+    };
 }
-
-namespace Net
-{
-    class DNSUpdater;
-}
-
-class WebApplication;
-
-class WebUI final : public ApplicationComponent<QObject>
-{
-    Q_OBJECT
-    Q_DISABLE_COPY_MOVE(WebUI)
-
-public:
-    explicit WebUI(IApplication *app);
-
-    bool isEnabled() const;
-    bool isErrored() const;
-    bool isHttps() const;
-    QHostAddress hostAddress() const;
-    quint16 port() const;
-
-signals:
-    void fatalError();
-
-private slots:
-    void configure();
-
-private:
-    bool m_isEnabled = false;
-    bool m_isErrored = false;
-    QPointer<Http::Server> m_httpServer;
-    QPointer<Net::DNSUpdater> m_dnsUpdater;
-    QPointer<WebApplication> m_webapp;
-};

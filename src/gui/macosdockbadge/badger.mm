@@ -1,6 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2015  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2023  Nick Korotysh <nick.korotysh@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,50 +26,30 @@
  * exception statement from your version.
  */
 
-#pragma once
+#include "badger.h"
 
-#include <QHostAddress>
-#include <QObject>
-#include <QPointer>
+#import "badgeview.h"
 
-#include "base/applicationcomponent.h"
-
-namespace Http
+namespace MacUtils
 {
-    class Server;
+    struct Badger::Impl
+    {
+        BadgeView *view = nullptr;
+    };
+
+    Badger::Badger()
+        : m_impl(std::make_unique<Impl>())
+    {
+        m_impl->view = [[BadgeView alloc] init];
+        NSApp.dockTile.contentView = m_impl->view;
+    }
+
+    Badger::~Badger() = default;
+
+    void Badger::updateSpeed(const int64_t dlRate, const int64_t ulRate)
+    {
+        // only update if the badged values change
+        if ([m_impl->view setRatesWithDownload:dlRate upload:ulRate])
+            [NSApp.dockTile display];
+    }
 }
-
-namespace Net
-{
-    class DNSUpdater;
-}
-
-class WebApplication;
-
-class WebUI final : public ApplicationComponent<QObject>
-{
-    Q_OBJECT
-    Q_DISABLE_COPY_MOVE(WebUI)
-
-public:
-    explicit WebUI(IApplication *app);
-
-    bool isEnabled() const;
-    bool isErrored() const;
-    bool isHttps() const;
-    QHostAddress hostAddress() const;
-    quint16 port() const;
-
-signals:
-    void fatalError();
-
-private slots:
-    void configure();
-
-private:
-    bool m_isEnabled = false;
-    bool m_isErrored = false;
-    QPointer<Http::Server> m_httpServer;
-    QPointer<Net::DNSUpdater> m_dnsUpdater;
-    QPointer<WebApplication> m_webapp;
-};
