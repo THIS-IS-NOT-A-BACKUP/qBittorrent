@@ -885,35 +885,22 @@ int Application::exec()
 #endif
         m_window = new MainWindow(this, windowState);
         delete m_startupProgressDialog;
-#ifdef Q_OS_WIN
-        auto *pref = Preferences::instance();
-        if (!pref->neverCheckFileAssoc() && (!Utils::OS::isTorrentFileAssocSet() || !Utils::OS::isMagnetLinkAssocSet()))
-        {
-            if (QMessageBox::question(m_window, tr("Torrent file association")
-                                      , tr("qBittorrent is not the default application for opening torrent files or Magnet links.\nDo you want to make qBittorrent the default application for these?")
-                                      , QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
-            {
-                Utils::OS::setTorrentFileAssoc(true);
-                Utils::OS::setMagnetLinkAssoc(true);
-            }
-            else
-            {
-                pref->setNeverCheckFileAssoc();
-            }
-        }
-#endif // Q_OS_WIN
 #endif // DISABLE_GUI
 
 #ifndef DISABLE_WEBUI
         m_webui = new WebUI(this);
 #ifdef DISABLE_GUI
-        if (m_webui->isErrored())
-            QCoreApplication::exit(EXIT_FAILURE);
-        connect(m_webui, &WebUI::fatalError, this, []() { QCoreApplication::exit(EXIT_FAILURE); });
+        connect(m_webui, &WebUI::error, this, [](const QString &message) { fprintf(stderr, "%s\n", qUtf8Printable(message)); });
 
         printf("%s", qUtf8Printable(u"\n******** %1 ********\n"_s.arg(tr("Information"))));
 
-        if (m_webui->isEnabled())
+        if (m_webui->isErrored())
+        {
+            const QString error = m_webui->errorMessage() + u'\n'
+                    + tr("To fix the error, you may need to edit the config file manually.");
+            fprintf(stderr, "%s\n", qUtf8Printable(error));
+        }
+        else if (m_webui->isEnabled())
         {
             const QHostAddress address = m_webui->hostAddress();
             const QString url = u"%1://%2:%3"_s.arg((m_webui->isHttps() ? u"https"_s : u"http"_s)
