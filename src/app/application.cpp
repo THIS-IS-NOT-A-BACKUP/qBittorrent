@@ -57,7 +57,6 @@
 #include <QProgressDialog>
 #ifdef Q_OS_WIN
 #include <QSessionManager>
-#include <QSharedMemory>
 #endif // Q_OS_WIN
 #ifdef Q_OS_MACOS
 #include <QFileOpenEvent>
@@ -92,7 +91,6 @@
 #include "upgrade.h"
 
 #ifndef DISABLE_GUI
-#include "gui/guiaddtorrentmanager.h"
 #include "gui/desktopintegration.h"
 #include "gui/mainwindow.h"
 #include "gui/shutdownconfirmdialog.h"
@@ -271,16 +269,17 @@ Application::Application(int &argc, char **argv)
     SettingsStorage::initInstance();
     Preferences::initInstance();
 
-    const bool firstTimeUser = !Preferences::instance()->getAcceptedLegal();
-    if (!firstTimeUser)
+    const bool firstTimeUser = SettingsStorage::instance()->isEmpty();
+    if (firstTimeUser)
+    {
+        setCurrentMigrationVersion();
+        handleChangedDefaults(DefaultPreferencesMode::Current);
+    }
+    else
     {
         if (!upgrade())
             throw RuntimeError(u"Failed migration of old settings"_s); // Not translatable. Translation isn't configured yet.
         handleChangedDefaults(DefaultPreferencesMode::Legacy);
-    }
-    else
-    {
-        handleChangedDefaults(DefaultPreferencesMode::Current);
     }
 
     initializeTranslation();
@@ -523,7 +522,10 @@ void Application::runExternalProgram(const QString &programTemplate, const BitTo
                 str.replace(i, 2, torrent->contentPath().toString());
                 break;
             case u'G':
-                str.replace(i, 2, torrent->tags().join(u","_s));
+                {
+                    const TagSet &tags = torrent->tags();
+                    str.replace(i, 2, QStringList(tags.cbegin(), tags.cend()).join(u","_s));
+                }
                 break;
             case u'I':
                 str.replace(i, 2, (torrent->infoHash().v1().isValid() ? torrent->infoHash().v1().toString() : u"-"_s));
