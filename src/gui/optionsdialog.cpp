@@ -1,5 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
+ * Copyright (C) 2024  Jonathan Ketchker
  * Copyright (C) 2023  Vladimir Golovnev <glassez@yandex.ru>
  * Copyright (C) 2006  Christophe Dumez <chris@qbittorrent.org>
  *
@@ -29,6 +30,7 @@
 
 #include "optionsdialog.h"
 
+#include <chrono>
 #include <cstdlib>
 #include <limits>
 
@@ -523,7 +525,7 @@ void OptionsDialog::loadDownloadsTabOptions()
     m_ui->stopConditionComboBox->setToolTip(
                 u"<html><body><p><b>" + tr("None") + u"</b> - " + tr("No stop condition is set.") + u"</p><p><b>" +
                 tr("Metadata received") + u"</b> - " + tr("Torrent will stop after metadata is received.") +
-                u" <em>" + tr("Torrents that have metadata initially aren't affected.") + u"</em></p><p><b>" +
+                u" <em>" + tr("Torrents that have metadata initially will be added as stopped.") + u"</em></p><p><b>" +
                 tr("Files checked") + u"</b> - " + tr("Torrent will stop after files are initially checked.") +
                 u" <em>" + tr("This will also download metadata if it wasn't there initially.") + u"</em></p></body></html>");
     m_ui->stopConditionComboBox->setItemData(0, QVariant::fromValue(BitTorrent::Torrent::StopCondition::None));
@@ -1193,6 +1195,7 @@ void OptionsDialog::loadRSSTabOptions()
 
     m_ui->checkRSSEnable->setChecked(rssSession->isProcessingEnabled());
     m_ui->spinRSSRefreshInterval->setValue(rssSession->refreshInterval());
+    m_ui->spinRSSFetchDelay->setValue(rssSession->fetchDelay().count());
     m_ui->spinRSSMaxArticlesPerFeed->setValue(rssSession->maxArticlesPerFeed());
     m_ui->checkRSSAutoDownloaderEnable->setChecked(autoDownloader->isProcessingEnabled());
     m_ui->textSmartEpisodeFilters->setPlainText(autoDownloader->smartEpisodeFilters().join(u'\n'));
@@ -1209,6 +1212,7 @@ void OptionsDialog::loadRSSTabOptions()
     connect(m_ui->textSmartEpisodeFilters, &QPlainTextEdit::textChanged, this, &OptionsDialog::enableApplyButton);
     connect(m_ui->checkSmartFilterDownloadRepacks, &QCheckBox::toggled, this, &OptionsDialog::enableApplyButton);
     connect(m_ui->spinRSSRefreshInterval, qSpinBoxValueChanged, this, &OptionsDialog::enableApplyButton);
+    connect(m_ui->spinRSSFetchDelay, qSpinBoxValueChanged, this, &OptionsDialog::enableApplyButton);
     connect(m_ui->spinRSSMaxArticlesPerFeed, qSpinBoxValueChanged, this, &OptionsDialog::enableApplyButton);
 }
 
@@ -1219,6 +1223,7 @@ void OptionsDialog::saveRSSTabOptions() const
 
     rssSession->setProcessingEnabled(m_ui->checkRSSEnable->isChecked());
     rssSession->setRefreshInterval(m_ui->spinRSSRefreshInterval->value());
+    rssSession->setFetchDelay(std::chrono::seconds(m_ui->spinRSSFetchDelay->value()));
     rssSession->setMaxArticlesPerFeed(m_ui->spinRSSMaxArticlesPerFeed->value());
     autoDownloader->setProcessingEnabled(m_ui->checkRSSAutoDownloaderEnable->isChecked());
     autoDownloader->setSmartEpisodeFilters(m_ui->textSmartEpisodeFilters->toPlainText().split(u'\n', Qt::SkipEmptyParts));
