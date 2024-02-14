@@ -35,7 +35,8 @@ window.qBittorrent.Client = (() => {
             closeWindows: closeWindows,
             genHash: genHash,
             getSyncMainDataInterval: getSyncMainDataInterval,
-            qbtVersion: qbtVersion
+            isStopped: isStopped,
+            stop: stop
         };
     };
 
@@ -57,8 +58,13 @@ window.qBittorrent.Client = (() => {
         return customSyncMainDataInterval ? customSyncMainDataInterval : serverSyncMainDataInterval;
     };
 
-    const qbtVersion = function() {
-        return LocalPreferences.get('qbtVersion', '');
+    let stopped = false;
+    const isStopped = () => {
+        return stopped;
+    };
+
+    const stop = () => {
+        stopped = true;
     };
 
     return exports();
@@ -110,7 +116,7 @@ let selected_filter = LocalPreferences.get('selected_filter', 'all');
 let setFilter = function() {};
 let toggleFilterDisplay = function() {};
 
-window.addEvent('load', function() {
+window.addEventListener("DOMContentLoaded", function() {
     const saveColumnSizes = function() {
         const filters_width = $('Filters').getSize().x;
         const properties_height_rel = $('propertiesPanel').getSize().y / Window.getSize().y;
@@ -269,29 +275,21 @@ window.addEvent('load', function() {
     initializeWindows();
 
     // Show Top Toolbar is enabled by default
-    let showTopToolbar = true;
-    if (LocalPreferences.get('show_top_toolbar') !== null)
-        showTopToolbar = LocalPreferences.get('show_top_toolbar') == "true";
+    let showTopToolbar = LocalPreferences.get('show_top_toolbar', 'true') == "true";
     if (!showTopToolbar) {
         $('showTopToolbarLink').firstChild.style.opacity = '0';
         $('mochaToolbar').addClass('invisible');
     }
 
     // Show Status Bar is enabled by default
-    let showStatusBar = true;
-    if (LocalPreferences.get('show_status_bar') !== null)
-        showStatusBar = LocalPreferences.get('show_status_bar') === "true";
+    let showStatusBar = LocalPreferences.get('show_status_bar', 'true') === "true";
     if (!showStatusBar) {
         $('showStatusBarLink').firstChild.style.opacity = '0';
         $('desktopFooterWrapper').addClass('invisible');
     }
 
-    const getShowFiltersSidebar = function() {
-        // Show Filters Sidebar is enabled by default
-        const show = LocalPreferences.get('show_filters_sidebar');
-        return (show === null) || (show === 'true');
-    };
-    const showFiltersSidebar = getShowFiltersSidebar();
+    // Show Filters Sidebar is enabled by default
+    let showFiltersSidebar = LocalPreferences.get('show_filters_sidebar', 'true') === "true";
     if (!showFiltersSidebar) {
         $('showFiltersSidebarLink').firstChild.style.opacity = '0';
         $('filtersColumn').addClass('invisible');
@@ -667,7 +665,7 @@ window.addEvent('load', function() {
         };
     })();
 
-    let syncMainDataTimer;
+    let syncMainDataTimeoutID;
     let syncRequestInProgress = false;
     const syncMainData = function() {
         const url = new URI('api/v2/sync/maindata');
@@ -852,10 +850,15 @@ window.addEvent('load', function() {
     };
 
     const syncData = function(delay) {
-        if (!syncRequestInProgress) {
-            clearTimeout(syncMainDataTimer);
-            syncMainDataTimer = syncMainData.delay(delay);
-        }
+        if (syncRequestInProgress)
+            return;
+
+        clearTimeout(syncMainDataTimeoutID);
+
+        if (window.qBittorrent.Client.isStopped())
+            return;
+
+        syncMainDataTimeoutID = syncMainData.delay(delay);
     };
 
     const processServerState = function() {
@@ -869,12 +872,15 @@ window.addEvent('load', function() {
             transfer_info += " [" + window.qBittorrent.Misc.friendlyUnit(serverState.up_rate_limit, true) + "]";
         transfer_info += " (" + window.qBittorrent.Misc.friendlyUnit(serverState.up_info_data, false) + ")";
         $("UpInfos").set('html', transfer_info);
+
+        const qbtVersion = window.qBittorrent.Cache.qbtVersion.get();
+
         if (speedInTitle) {
-            document.title = "QBT_TR([D: %1, U: %2] qBittorrent %3)QBT_TR[CONTEXT=MainWindow]".replace("%1", window.qBittorrent.Misc.friendlyUnit(serverState.dl_info_speed, true)).replace("%2", window.qBittorrent.Misc.friendlyUnit(serverState.up_info_speed, true)).replace("%3", window.qBittorrent.Client.qbtVersion());
+            document.title = "QBT_TR([D: %1, U: %2] qBittorrent %3)QBT_TR[CONTEXT=MainWindow]".replace("%1", window.qBittorrent.Misc.friendlyUnit(serverState.dl_info_speed, true)).replace("%2", window.qBittorrent.Misc.friendlyUnit(serverState.up_info_speed, true)).replace("%3", qbtVersion);
             document.title += " QBT_TR(Web UI)QBT_TR[CONTEXT=OptionsDialog]";
         }
         else
-            document.title = ("qBittorrent " + window.qBittorrent.Client.qbtVersion() + " QBT_TR(Web UI)QBT_TR[CONTEXT=OptionsDialog]");
+            document.title = ("qBittorrent " + qbtVersion + " QBT_TR(Web UI)QBT_TR[CONTEXT=OptionsDialog]");
         $('freeSpaceOnDisk').set('html', 'QBT_TR(Free space: %1)QBT_TR[CONTEXT=HttpServer]'.replace("%1", window.qBittorrent.Misc.friendlyUnit(serverState.free_space_on_disk)));
         $('DHTNodes').set('html', 'QBT_TR(DHT: %1 nodes)QBT_TR[CONTEXT=StatusBar]'.replace("%1", serverState.dht_nodes));
 
@@ -1034,7 +1040,7 @@ window.addEvent('load', function() {
     });
 
     $('showFiltersSidebarLink').addEvent('click', function(e) {
-        const showFiltersSidebar = !getShowFiltersSidebar();
+        showFiltersSidebar = !showFiltersSidebar;
         LocalPreferences.set('show_filters_sidebar', showFiltersSidebar.toString());
         if (showFiltersSidebar) {
             $('showFiltersSidebarLink').firstChild.style.opacity = '1';
@@ -1575,36 +1581,11 @@ window.addEvent('load', function() {
             }
         }
     }).activate();
+});
 
-    // fetch qbt version and store it locally
-    new Request({
-        url: 'api/v2/app/version',
-        method: 'get',
-        noCache: true,
-        onSuccess: (info) => {
-            if (!info)
-                return;
-
-            LocalPreferences.set('qbtVersion', info);
-        }
-    }).send();
-
-    // fetch build info and store it locally
-    new Request.JSON({
-        url: 'api/v2/app/buildInfo',
-        method: 'get',
-        noCache: true,
-        onSuccess: (info) => {
-            if (!info)
-                return;
-
-            LocalPreferences.set('buildInfo.qtVersion', info.qt);
-            LocalPreferences.set('buildInfo.libtorrentVersion', info.libtorrent);
-            LocalPreferences.set('buildInfo.boostVersion', info.boost);
-            LocalPreferences.set('buildInfo.opensslVersion', info.openssl);
-            LocalPreferences.set('buildInfo.zlibVersion', info.zlib);
-            LocalPreferences.set('buildInfo.bitness', info.bitness);
-            LocalPreferences.set('buildInfo.platform', info.platform);
-        }
-    }).send();
+window.addEventListener("load", () => {
+    // fetch various data and store it in memory
+    window.qBittorrent.Cache.buildInfo.init();
+    window.qBittorrent.Cache.preferences.init();
+    window.qBittorrent.Cache.qbtVersion.init();
 });
