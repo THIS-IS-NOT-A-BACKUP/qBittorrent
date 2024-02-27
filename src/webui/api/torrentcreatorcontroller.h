@@ -1,7 +1,7 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2023  Vladimir Golovnev <glassez@yandex.ru>
- * Copyright (c) 2007  Trolltech ASA <info@trolltech.com>
+ * Copyright (C) 2024  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2024  Radu Carpa <radu.carpa@cern.ch>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,51 +27,29 @@
  * exception statement from your version.
  */
 
-#include "lineedit.h"
+#pragma once
 
-#include <chrono>
+#include "apicontroller.h"
 
-#include <QAction>
-#include <QKeyEvent>
-#include <QTimer>
-
-#include "base/global.h"
-#include "uithememanager.h"
-
-using namespace std::chrono_literals;
-
-namespace
+namespace BitTorrent
 {
-    const std::chrono::milliseconds FILTER_INPUT_DELAY {400};
+    class TorrentCreationManager;
 }
 
-LineEdit::LineEdit(QWidget *parent)
-    : QLineEdit(parent)
-    , m_delayedTextChangedTimer {new QTimer(this)}
+class TorrentCreatorController final : public APIController
 {
-    auto *action = new QAction(UIThemeManager::instance()->getIcon(u"edit-find"_s), QString(), this);
-    addAction(action, QLineEdit::LeadingPosition);
+    Q_OBJECT
+    Q_DISABLE_COPY_MOVE(TorrentCreatorController)
 
-    setClearButtonEnabled(true);
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+public:
+    TorrentCreatorController(BitTorrent::TorrentCreationManager *torrentCreationManager, IApplication *app, QObject *parent = nullptr);
 
-    m_delayedTextChangedTimer->setSingleShot(true);
-    connect(m_delayedTextChangedTimer, &QTimer::timeout, this, [this]
-    {
-        emit textChanged(text());
-    });
-    connect(this, &QLineEdit::textChanged, this, [this]
-    {
-        m_delayedTextChangedTimer->start(FILTER_INPUT_DELAY);
-    });
-}
+private slots:
+    void addTaskAction();
+    void statusAction();
+    void torrentFileAction();
+    void deleteTaskAction();
 
-void LineEdit::keyPressEvent(QKeyEvent *event)
-{
-    if ((event->modifiers() == Qt::NoModifier) && (event->key() == Qt::Key_Escape))
-    {
-        clear();
-    }
-
-    QLineEdit::keyPressEvent(event);
-}
+private:
+    BitTorrent::TorrentCreationManager *m_torrentCreationManager = nullptr;
+};

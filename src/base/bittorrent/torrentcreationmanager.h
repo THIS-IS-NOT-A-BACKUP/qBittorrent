@@ -1,7 +1,7 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2023  Vladimir Golovnev <glassez@yandex.ru>
- * Copyright (c) 2007  Trolltech ASA <info@trolltech.com>
+ * Copyright (C) 2024  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2024  Radu Carpa <radu.carpa@cern.ch>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,51 +27,44 @@
  * exception statement from your version.
  */
 
-#include "lineedit.h"
+#pragma once
 
-#include <chrono>
+#include <memory>
 
-#include <QAction>
-#include <QKeyEvent>
-#include <QTimer>
+#include <QtContainerFwd>
+#include <QObject>
+#include <QThreadPool>
 
-#include "base/global.h"
-#include "uithememanager.h"
+#include "base/applicationcomponent.h"
+#include "base/settingvalue.h"
+#include "torrentcreationtask.h"
+#include "torrentcreator.h"
 
-using namespace std::chrono_literals;
-
-namespace
+namespace BitTorrent
 {
-    const std::chrono::milliseconds FILTER_INPUT_DELAY {400};
-}
-
-LineEdit::LineEdit(QWidget *parent)
-    : QLineEdit(parent)
-    , m_delayedTextChangedTimer {new QTimer(this)}
-{
-    auto *action = new QAction(UIThemeManager::instance()->getIcon(u"edit-find"_s), QString(), this);
-    addAction(action, QLineEdit::LeadingPosition);
-
-    setClearButtonEnabled(true);
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-
-    m_delayedTextChangedTimer->setSingleShot(true);
-    connect(m_delayedTextChangedTimer, &QTimer::timeout, this, [this]
+    class TorrentCreationManager final : public ApplicationComponent<QObject>
     {
-        emit textChanged(text());
-    });
-    connect(this, &QLineEdit::textChanged, this, [this]
-    {
-        m_delayedTextChangedTimer->start(FILTER_INPUT_DELAY);
-    });
-}
+        Q_OBJECT
+        Q_DISABLE_COPY_MOVE(TorrentCreationManager)
 
-void LineEdit::keyPressEvent(QKeyEvent *event)
-{
-    if ((event->modifiers() == Qt::NoModifier) && (event->key() == Qt::Key_Escape))
-    {
-        clear();
-    }
+    public:
+        explicit TorrentCreationManager(IApplication *app, QObject *parent = nullptr);
+        ~TorrentCreationManager() override;
 
-    QLineEdit::keyPressEvent(event);
+        std::shared_ptr<TorrentCreationTask> createTask(const TorrentCreatorParams &params, bool startSeeding = true);
+        std::shared_ptr<TorrentCreationTask> getTask(const QString &id) const;
+        QList<std::shared_ptr<TorrentCreationTask>> tasks() const;
+        bool deleteTask(const QString &id);
+
+    private:
+        QString generateTaskID() const;
+
+        CachedSettingValue<qint32> m_maxTasks;
+        CachedSettingValue<qint32> m_numThreads;
+
+        class TaskSet;
+        std::unique_ptr<TaskSet> m_tasks;
+
+        QThreadPool m_threadPool;
+    };
 }
