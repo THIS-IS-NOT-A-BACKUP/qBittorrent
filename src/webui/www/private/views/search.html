@@ -913,7 +913,7 @@
         };
 
         const searchSizeFilterPrefixChanged = function() {
-            if (($('searchMinSizeFilter').get('value') != 0) || ($('searchMaxSizeFilter').get('value') != 0))
+            if ((Number($('searchMinSizeFilter').get('value')) !== 0) || (Number($('searchMaxSizeFilter').get('value')) !== 0))
                 searchSizeFilterChanged();
         };
 
@@ -988,6 +988,7 @@
                                     nbLeechers: result.nbLeechers,
                                     nbSeeders: result.nbSeeders,
                                     siteUrl: result.siteUrl,
+                                    pubDate: result.pubDate,
                                 };
 
                                 newRows.push(row);
