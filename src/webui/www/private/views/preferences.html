@@ -8,13 +8,37 @@
     </fieldset>
 
     <fieldset class="settings">
+        <legend>QBT_TR(Action on double-click)QBT_TR[CONTEXT=OptionsDialog]</legend>
+        <table>
+            <tr>
+                <td><label for="dblclickDownloadSelect">QBT_TR(Downloading torrents:)QBT_TR[CONTEXT=OptionsDialog]</label></td>
+                <td>
+                    <select id="dblclickDownloadSelect">
+                        <option value="1" selected>QBT_TR(Start / Stop Torrent)QBT_TR[CONTEXT=OptionsDialog]</option>
+                        <option value="0">QBT_TR(No action)QBT_TR[CONTEXT=OptionsDialog]</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><label for="dblclickCompleteSelect">QBT_TR(Completed torrents:)QBT_TR[CONTEXT=OptionsDialog]</label></td>
+                <td>
+                    <select id="dblclickCompleteSelect">
+                        <option value="1" selected>QBT_TR(Start / Stop Torrent)QBT_TR[CONTEXT=OptionsDialog]</option>
+                        <option value="0">QBT_TR(No action)QBT_TR[CONTEXT=OptionsDialog]</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </fieldset>
+
+    <fieldset class="settings">
         <legend>
             <input type="checkbox" id="filelog_checkbox" onclick="qBittorrent.Preferences.updateFileLogEnabled();" />
             <label for="filelog_checkbox">QBT_TR(Log file)QBT_TR[CONTEXT=OptionsDialog]</label>
         </legend>
         <div class="formRow">
             <label for="filelog_save_path_input">QBT_TR(Save path:)QBT_TR[CONTEXT=OptionsDialog]</label>
-            <input type="text" id="filelog_save_path_input" />
+            <input type="text" id="filelog_save_path_input" class="pathDirectory" />
         </div>
         <table>
             <tr>
@@ -151,7 +175,7 @@
                     <label for="savepath_text">QBT_TR(Default Save Path:)QBT_TR[CONTEXT=OptionsDialog]</label>
                 </td>
                 <td>
-                    <input type="text" id="savepath_text" autocorrect="off" autocapitalize="none" />
+                    <input type="text" id="savepath_text" class="pathDirectory" autocorrect="off" autocapitalize="none" />
                 </td>
             </tr>
             <tr>
@@ -160,7 +184,7 @@
                     <label for="temppath_checkbox">QBT_TR(Keep incomplete torrents in:)QBT_TR[CONTEXT=OptionsDialog]</label>
                 </td>
                 <td>
-                    <input type="text" id="temppath_text" autocorrect="off" autocapitalize="none" />
+                    <input type="text" id="temppath_text" class="pathDirectory" autocorrect="off" autocapitalize="none" />
                 </td>
             </tr>
             <tr>
@@ -169,7 +193,7 @@
                     <label for="exportdir_checkbox">QBT_TR(Copy .torrent files to:)QBT_TR[CONTEXT=OptionsDialog]</label>
                 </td>
                 <td>
-                    <input type="text" id="exportdir_text" autocorrect="off" autocapitalize="none" />
+                    <input type="text" id="exportdir_text" class="pathDirectory" autocorrect="off" autocapitalize="none" />
                 </td>
             </tr>
             <tr>
@@ -178,7 +202,7 @@
                     <label for="exportdirfin_checkbox">QBT_TR(Copy .torrent files for finished downloads to:)QBT_TR[CONTEXT=OptionsDialog]</label>
                 </td>
                 <td>
-                    <input type="text" id="exportdirfin_text" autocorrect="off" autocapitalize="none" />
+                    <input type="text" id="exportdirfin_text" class="pathDirectory" autocorrect="off" autocapitalize="none" />
                 </td>
             </tr>
         </table>
@@ -810,7 +834,7 @@
                         <label for="ssl_cert_text">QBT_TR(Certificate:)QBT_TR[CONTEXT=OptionsDialog]</label>
                     </td>
                     <td>
-                        <input type="text" id="ssl_cert_text" style="width: 30em;" />
+                        <input type="text" id="ssl_cert_text" class="pathFile" style="width: 30em;" />
                     </td>
                 </tr>
                 <tr>
@@ -818,7 +842,7 @@
                         <label for="ssl_key_text">QBT_TR(Key:)QBT_TR[CONTEXT=OptionsDialog]</label>
                     </td>
                     <td>
-                        <input type="text" id="ssl_key_text" style="width: 30em;" />
+                        <input type="text" id="ssl_key_text" class="pathFile" style="width: 30em;" />
                     </td>
                 </tr>
             </table>
@@ -880,7 +904,7 @@
             </legend>
             <div class="formRow">
                 <label for="webui_files_location_textarea">QBT_TR(Files location:)QBT_TR[CONTEXT=OptionsDialog]</label>
-                <input type="text" id="webui_files_location_textarea" />
+                <input type="text" id="webui_files_location_textarea" class="pathDirectory" />
             </div>
         </fieldset>
 
@@ -1126,7 +1150,7 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
                     <label for="pythonExecutablePath">QBT_TR(Python executable path (may require restart):)QBT_TR[CONTEXT=OptionsDialog]</label>
                 </td>
                 <td>
-                    <input type="text" id="pythonExecutablePath" placeholder="QBT_TR((Auto detect if empty))QBT_TR[CONTEXT=OptionsDialog]" style="width: 15em;" />
+                    <input type="text" id="pythonExecutablePath" class="pathFile" placeholder="QBT_TR((Auto detect if empty))QBT_TR[CONTEXT=OptionsDialog]" style="width: 15em;" />
                 </td>
             </tr>
         </table>
@@ -1995,6 +2019,8 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             window.parent.qBittorrent.Cache.preferences.init({
                 onSuccess: (pref) => {
                     // Behavior tab
+                    $("dblclickDownloadSelect").value = LocalPreferences.get("dblclick_download", "1");
+                    $("dblclickCompleteSelect").value = LocalPreferences.get("dblclick_complete", "1");
                     $("filelog_checkbox").setProperty("checked", pref.file_log_enabled);
                     $("filelog_save_path_input").setProperty("value", pref.file_log_path);
                     $("filelog_backup_checkbox").setProperty("checked", pref.file_log_backup_enabled);
@@ -2403,6 +2429,8 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             // Validate form data
 
             // Behavior tab
+            LocalPreferences.set("dblclick_download", $("dblclickDownloadSelect").value);
+            LocalPreferences.set("dblclick_complete", $("dblclickCompleteSelect").value);
             settings["file_log_enabled"] = $("filelog_checkbox").getProperty("checked");
             settings["file_log_path"] = $("filelog_save_path_input").getProperty("value");
             settings["file_log_backup_enabled"] = $("filelog_backup_checkbox").getProperty("checked");
@@ -2896,4 +2924,6 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
     })();
 
     Object.freeze(window.qBittorrent.Preferences);
+
+    window.qBittorrent.pathAutofill.attachPathAutofill();
 </script>
