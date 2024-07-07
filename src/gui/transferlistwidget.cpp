@@ -1,6 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2023  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2023-2024  Vladimir Golovnev <glassez@yandex.ru>
  * Copyright (C) 2006  Christophe Dumez <chris@qbittorrent.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -184,6 +184,7 @@ TransferListWidget::TransferListWidget(QWidget *parent, MainWindow *mainWindow)
         setColumnHidden(TransferListModel::TR_LAST_ACTIVITY, true);
         setColumnHidden(TransferListModel::TR_TOTAL_SIZE, true);
         setColumnHidden(TransferListModel::TR_REANNOUNCE, true);
+        setColumnHidden(TransferListModel::TR_PRIVATE, true);
     }
 
     //Ensure that at least one column is visible at all times
@@ -1191,7 +1192,7 @@ void TransferListWidget::displayListMenu()
     const TagSet tags = BitTorrent::Session::instance()->tags();
     for (const Tag &tag : asConst(tags))
     {
-        auto *action = new TriStateAction(tag.toString(), tagsMenu);
+        auto *action = new TriStateAction(Utils::Gui::tagToWidgetText(tag), tagsMenu);
         action->setCloseOnInteraction(false);
 
         const Qt::CheckState initialState = tagsInAll.contains(tag) ? Qt::Checked
