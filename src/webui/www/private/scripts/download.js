@@ -23,11 +23,9 @@
 
 "use strict";
 
-if (window.qBittorrent === undefined)
-    window.qBittorrent = {};
-
-window.qBittorrent.Download = (function() {
-    const exports = function() {
+window.qBittorrent ??= {};
+window.qBittorrent.Download ??= (() => {
+    const exports = () => {
         return {
             changeCategorySelect: changeCategorySelect,
             changeTMM: changeTMM
@@ -51,8 +49,8 @@ window.qBittorrent.Download = (function() {
 
                         const category = data[i];
                         const option = new Element("option");
-                        option.set("value", category.name);
-                        option.set("html", category.name);
+                        option.value = category.name;
+                        option.textContent = category.name;
                         $("categorySelect").appendChild(option);
                     }
                 }
@@ -64,7 +62,7 @@ window.qBittorrent.Download = (function() {
         const pref = window.parent.qBittorrent.Cache.preferences.get();
 
         defaultSavePath = pref.save_path;
-        $("savepath").setProperty("value", defaultSavePath);
+        $("savepath").value = defaultSavePath;
         $("startTorrent").checked = !pref.add_stopped_enabled;
         $("addToTopOfQueue").checked = pref.add_to_top_of_queue;
 
@@ -138,5 +136,4 @@ window.qBittorrent.Download = (function() {
 
     return exports();
 })();
-
 Object.freeze(window.qBittorrent.Download);

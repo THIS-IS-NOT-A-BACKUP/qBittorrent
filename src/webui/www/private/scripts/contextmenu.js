@@ -28,11 +28,9 @@
 
 "use strict";
 
-if (window.qBittorrent === undefined)
-    window.qBittorrent = {};
-
-window.qBittorrent.ContextMenu = (function() {
-    const exports = function() {
+window.qBittorrent ??= {};
+window.qBittorrent.ContextMenu ??= (() => {
+    const exports = () => {
         return {
             ContextMenu: ContextMenu,
             TorrentsTableContextMenu: TorrentsTableContextMenu,
@@ -186,8 +184,8 @@ window.qBittorrent.ContextMenu = (function() {
 
         addTarget: function(t) {
             // prevent long press from selecting this text
-            t.style.setProperty("user-select", "none");
-            t.style.setProperty("-webkit-user-select", "none");
+            t.style.userSelect = "none";
+            t.style["-webkit-user-select"] = "none";
 
             this.targets[this.targets.length] = t;
             this.setupEventListeners(t);
@@ -219,7 +217,7 @@ window.qBittorrent.ContextMenu = (function() {
                 item.addEvent("click", (e) => {
                     e.preventDefault();
                     if (!item.hasClass("disabled")) {
-                        this.execute(item.get("href").split("#")[1], $(this.options.element));
+                        this.execute(item.href.split("#")[1], $(this.options.element));
                         this.fireEvent("click", [item, e]);
                     }
                 });
@@ -540,13 +538,13 @@ window.qBittorrent.ContextMenu = (function() {
             const enabledColumnIndex = function(text) {
                 const columns = $("searchPluginsTableFixedHeaderRow").getChildren("th");
                 for (let i = 0; i < columns.length; ++i) {
-                    if (columns[i].get("html") === "Enabled")
+                    if (columns[i].textContent === "Enabled")
                         return i;
                 }
             };
 
             this.showItem("Enabled");
-            this.setItemChecked("Enabled", this.options.element.getChildren("td")[enabledColumnIndex()].get("html") === "Yes");
+            this.setItemChecked("Enabled", (this.options.element.getChildren("td")[enabledColumnIndex()].textContent === "Yes"));
 
             this.showItem("Uninstall");
         }
@@ -680,5 +678,4 @@ window.qBittorrent.ContextMenu = (function() {
 
     return exports();
 })();
-
 Object.freeze(window.qBittorrent.ContextMenu);

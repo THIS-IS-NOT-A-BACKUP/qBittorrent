@@ -158,12 +158,8 @@
 <script>
     "use strict";
 
-    if (window.qBittorrent === undefined)
-        window.qBittorrent = {};
-
-    const serverSyncRssDataInterval = 1500;
-
-    window.qBittorrent.Rss = (() => {
+    window.qBittorrent ??= {};
+    window.qBittorrent.Rss ??= (() => {
         const exports = () => {
             return {
                 init: init,
@@ -181,6 +177,7 @@
             };
         };
 
+        const serverSyncRssDataInterval = 1500;
         let feedData = {};
         let pathByFeedId = new Map();
         let feedRefreshTimer;
@@ -405,12 +402,12 @@
                 $("rssDetailsView").append((() => {
                     const torrentName = document.createElement("p");
                     torrentName.innerText = article.title;
-                    torrentName.setAttribute("id", "rssTorrentDetailsName");
+                    torrentName.id = "rssTorrentDetailsName";
                     return torrentName;
                 })());
                 $("rssDetailsView").append((() => {
                     const torrentDate = document.createElement("div");
-                    torrentDate.setAttribute("id", "rssTorrentDetailsDate");
+                    torrentDate.id = "rssTorrentDetailsDate";
 
                     const torrentDateDesc = document.createElement("b");
                     torrentDateDesc.innerText = "QBT_TR(Date: )QBT_TR[CONTEXT=RSSWidget]";
@@ -828,6 +825,5 @@
 
         return exports();
     })();
-
     Object.freeze(window.qBittorrent.Rss);
 </script>
