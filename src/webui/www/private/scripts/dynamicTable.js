@@ -137,16 +137,10 @@ window.qBittorrent.DynamicTable ??= (() => {
             this.canResize = false;
 
             const resetElementBorderStyle = function(el, side) {
-                if ((side === "left") || (side !== "right")) {
-                    el.setStyle("border-left-style", "");
-                    el.setStyle("border-left-color", "");
-                    el.setStyle("border-left-width", "");
-                }
-                if ((side === "right") || (side !== "left")) {
-                    el.setStyle("border-right-style", "");
-                    el.setStyle("border-right-color", "");
-                    el.setStyle("border-right-width", "");
-                }
+                if ((side === "left") || (side !== "right"))
+                    el.style.borderLeft = "";
+                if ((side === "right") || (side !== "left"))
+                    el.style.borderRight = "";
             };
 
             const mouseMoveFn = function(e) {
@@ -190,11 +184,13 @@ window.qBittorrent.DynamicTable ??= (() => {
                             changeBorderSide = "left";
                     }
 
-                    borderChangeElement.setStyle("border-" + changeBorderSide + "-style", "solid");
-                    borderChangeElement.setStyle("border-" + changeBorderSide + "-color", "#e60");
-                    borderChangeElement.setStyle("border-" + changeBorderSide + "-width", "initial");
+                    const borderStyle = "initial solid #e60";
+                    if (changeBorderSide === "left")
+                        borderChangeElement.style.borderLeft = borderStyle;
+                    else
+                        borderChangeElement.style.borderRight = borderStyle;
 
-                    resetElementBorderStyle(borderChangeElement, changeBorderSide === "right" ? "left" : "right");
+                    resetElementBorderStyle(borderChangeElement, ((changeBorderSide === "right") ? "left" : "right"));
 
                     borderChangeElement.getSiblings('[class=""]').each((el) => {
                         resetElementBorderStyle(el);
@@ -218,17 +214,17 @@ window.qBittorrent.DynamicTable ??= (() => {
             const onStart = function(el, event) {
                 if (this.canResize) {
                     this.currentHeaderAction = "resize";
-                    this.startWidth = this.resizeTh.getStyle("width").toFloat();
+                    this.startWidth = parseInt(this.resizeTh.style.width, 10);
                 }
                 else {
                     this.currentHeaderAction = "drag";
-                    el.setStyle("background-color", "#C1D5E7");
+                    el.style.backgroundColor = "#C1D5E7";
                 }
             }.bind(this);
 
             const onDrag = function(el, event) {
                 if (this.currentHeaderAction === "resize") {
-                    let width = this.startWidth + (event.page.x - this.dragStartX);
+                    let width = this.startWidth + (event.event.pageX - this.dragStartX);
                     if (width < 16)
                         width = 16;
                     this.columns[this.resizeTh.columnName].width = width;
@@ -238,7 +234,7 @@ window.qBittorrent.DynamicTable ??= (() => {
 
             const onComplete = function(el, event) {
                 resetElementBorderStyle(this.lastHoverTh);
-                el.setStyle("background-color", "");
+                el.style.backgroundColor = "";
                 if (this.currentHeaderAction === "resize")
                     LocalPreferences.set("column_" + this.resizeTh.columnName + "_width_" + this.dynamicTableDivId, this.columns[this.resizeTh.columnName].width);
                 if ((this.currentHeaderAction === "drag") && (el !== this.lastHoverTh)) {
@@ -747,14 +743,14 @@ window.qBittorrent.DynamicTable ??= (() => {
                         e.preventDefault();
                         e.stopPropagation();
 
-                        if (e.control || e.meta) {
+                        if (e.ctrlKey || e.metaKey) {
                             // CTRL/CMD ⌘ key was pressed
                             if (this._this.isRowSelected(this.rowId))
                                 this._this.deselectRow(this.rowId);
                             else
                                 this._this.selectRow(this.rowId);
                         }
-                        else if (e.shift && (this._this.selectedRows.length === 1)) {
+                        else if (e.shiftKey && (this._this.selectedRows.length === 1)) {
                             // Shift key was pressed
                             this._this.selectRows(this._this.getSelectedRowId(), this.rowId);
                         }
@@ -855,7 +851,7 @@ window.qBittorrent.DynamicTable ??= (() => {
         },
 
         selectNextRow: function() {
-            const visibleRows = $(this.dynamicTableDivId).getElements("tbody tr").filter(e => e.getStyle("display") !== "none");
+            const visibleRows = $(this.dynamicTableDivId).getElements("tbody tr").filter(e => e.style.display !== "none");
             const selectedRowId = this.getSelectedRowId();
 
             let selectedIndex = -1;
@@ -877,7 +873,7 @@ window.qBittorrent.DynamicTable ??= (() => {
         },
 
         selectPreviousRow: function() {
-            const visibleRows = $(this.dynamicTableDivId).getElements("tbody tr").filter(e => e.getStyle("display") !== "none");
+            const visibleRows = $(this.dynamicTableDivId).getElements("tbody tr").filter(e => e.style.display !== "none");
             const selectedRowId = this.getSelectedRowId();
 
             let selectedIndex = -1;
@@ -1527,13 +1523,19 @@ window.qBittorrent.DynamicTable ??= (() => {
         getFilteredAndSortedRows: function() {
             const filteredRows = [];
 
-            const rows = this.rows.getValues();
             const useRegex = $("torrentsFilterRegexBox").checked;
             const filterText = $("torrentsFilterInput").value.trim().toLowerCase();
-            const filterTerms = (filterText.length > 0)
-                ? (useRegex ? new RegExp(filterText) : filterText.split(" "))
-                : null;
+            let filterTerms;
+            try {
+                filterTerms = (filterText.length > 0)
+                    ? (useRegex ? new RegExp(filterText) : filterText.split(" "))
+                    : null;
+            }
+            catch (e) { // SyntaxError: Invalid regex pattern
+                return filteredRows;
+            }
 
+            const rows = this.rows.getValues();
             for (let i = 0; i < rows.length; ++i) {
                 if (this.applyFilter(rows[i], selected_filter, selected_category, selectedTag, selectedTracker, filterTerms)) {
                     filteredRows.push(rows[i]);
