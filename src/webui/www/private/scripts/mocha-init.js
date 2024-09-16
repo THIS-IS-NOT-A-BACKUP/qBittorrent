@@ -132,6 +132,7 @@ let deleteTorrentsByTagFN = function() {};
 let startTorrentsByTrackerFN = function() {};
 let stopTorrentsByTrackerFN = function() {};
 let deleteTorrentsByTrackerFN = function() {};
+let deleteTrackerFN = function() {};
 let copyNameFN = function() {};
 let copyInfohashFN = function(policy) {};
 let copyMagnetLinkFN = function() {};
@@ -295,7 +296,7 @@ const initializeWindows = function() {
             // check if all selected torrents have same share ratio
             for (let i = 0; i < hashes.length; ++i) {
                 const hash = hashes[i];
-                const row = torrentsTable.rows[hash].full_data;
+                const row = torrentsTable.rows.get(hash).full_data;
                 const origValues = row.ratio_limit + "|" + row.seeding_time_limit + "|" + row.inactive_seeding_time_limit + "|"
                     + row.max_ratio + "|" + row.max_seeding_time + "|" + row.max_inactive_seeding_time;
 
@@ -522,7 +523,7 @@ const initializeWindows = function() {
         if (hashes.length) {
             let enable = false;
             hashes.each((hash, index) => {
-                const row = torrentsTable.rows[hash];
+                const row = torrentsTable.rows.get(hash);
                 if (!row.full_data.auto_tmm)
                     enable = true;
             });
@@ -570,7 +571,7 @@ const initializeWindows = function() {
         const hashes = torrentsTable.selectedRowsIds();
         if (hashes.length) {
             const hash = hashes[0];
-            const row = torrentsTable.rows[hash];
+            const row = torrentsTable.rows.get(hash);
 
             new MochaUI.Window({
                 id: "setLocationPage",
@@ -593,7 +594,7 @@ const initializeWindows = function() {
         const hashes = torrentsTable.selectedRowsIds();
         if (hashes.length === 1) {
             const hash = hashes[0];
-            const row = torrentsTable.rows[hash];
+            const row = torrentsTable.rows.get(hash);
             if (row) {
                 new MochaUI.Window({
                     id: "renamePage",
@@ -617,7 +618,7 @@ const initializeWindows = function() {
         const hashes = torrentsTable.selectedRowsIds();
         if (hashes.length === 1) {
             const hash = hashes[0];
-            const row = torrentsTable.rows[hash];
+            const row = torrentsTable.rows.get(hash);
             if (row) {
                 new MochaUI.Window({
                     id: "multiRenamePage",
@@ -1132,6 +1133,33 @@ const initializeWindows = function() {
                 }).send();
             }
         }
+    };
+
+    deleteTrackerFN = function(trackerHash) {
+        const trackerHashInt = Number.parseInt(trackerHash, 10);
+        if ((trackerHashInt === TRACKERS_ALL) || (trackerHashInt === TRACKERS_TRACKERLESS))
+            return;
+
+        const tracker = trackerList.get(trackerHashInt);
+        const host = tracker.host;
+        const urls = [...tracker.trackerTorrentMap.keys()];
+
+        new MochaUI.Window({
+            id: "confirmDeletionPage",
+            title: "QBT_TR(Remove tracker)QBT_TR[CONTEXT=confirmDeletionDlg]",
+            loadMethod: "iframe",
+            contentURL: new URI("confirmtrackerdeletion.html").setData("host", host).setData("urls", urls.map(encodeURIComponent).join("|")).toString(),
+            scrollbars: false,
+            resizable: true,
+            maximizable: false,
+            padding: 10,
+            width: 424,
+            height: 100,
+            onCloseComplete: function() {
+                updateMainData();
+                setTrackerFilter(TRACKERS_ALL);
+            }
+        });
     };
 
     copyNameFN = function() {
