@@ -11,13 +11,13 @@
         <file>private/css/dynamicTable.css</file>
         <file>private/css/Layout.css</file>
         <file>private/css/noscript.css</file>
-        <file>private/css/palette.css</file>
         <file>private/css/style.css</file>
         <file>private/css/Tabs.css</file>
         <file>private/css/vanillaSelectBox.css</file>
         <file>private/css/Window.css</file>
         <file>private/download.html</file>
         <file>private/downloadlimit.html</file>
+        <file>private/editfeedurl.html</file>
         <file>private/edittracker.html</file>
         <file>private/editwebseed.html</file>
         <file>private/images/3-state-checkbox.gif</file>
@@ -25,6 +25,7 @@
         <file>private/images/application-rss.svg</file>
         <file>private/images/application-url.svg</file>
         <file>private/images/arrow-right.gif</file>
+        <file>private/images/browser-cookies.svg</file>
         <file>private/images/checked-completed.svg</file>
         <file>private/images/collapse.svg</file>
         <file>private/images/configure.svg</file>
@@ -424,6 +425,7 @@
         <file>private/views/aboutToolbar.html</file>
         <file>private/views/confirmdeletion.html</file>
         <file>private/views/confirmRecheck.html</file>
+        <file>private/views/cookies.html</file>
         <file>private/views/filters.html</file>
         <file>private/views/installsearchplugin.html</file>
         <file>private/views/log.html</file>
