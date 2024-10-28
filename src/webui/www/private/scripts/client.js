@@ -155,6 +155,7 @@ let toggleFilterDisplay = function() {};
 window.addEventListener("DOMContentLoaded", () => {
     let isSearchPanelLoaded = false;
     let isLogPanelLoaded = false;
+    let isRssPanelLoaded = false;
 
     const saveColumnSizes = function() {
         const filters_width = $("Filters").getSize().x;
@@ -229,32 +230,63 @@ window.addEventListener("DOMContentLoaded", () => {
     buildLogTab();
     MochaUI.initializeTabs("mainWindowTabsList");
 
+    const handleFilterSelectionChange = function(prevSelectedTorrent, currSelectedTorrent) {
+        // clear properties panels when filter changes (e.g. selected torrent is no longer visible)
+        if (prevSelectedTorrent !== currSelectedTorrent) {
+            window.qBittorrent.PropGeneral.clear();
+            window.qBittorrent.PropTrackers.clear();
+            window.qBittorrent.PropPeers.clear();
+            window.qBittorrent.PropWebseeds.clear();
+            window.qBittorrent.PropFiles.clear();
+        }
+    };
+
     setStatusFilter = function(name) {
+        const currentHash = torrentsTable.getCurrentTorrentID();
+
         LocalPreferences.set("selected_filter", name);
         selectedStatus = name;
         highlightSelectedStatus();
         updateMainData();
+
+        const newHash = torrentsTable.getCurrentTorrentID();
+        handleFilterSelectionChange(currentHash, newHash);
     };
 
     setCategoryFilter = function(hash) {
+        const currentHash = torrentsTable.getCurrentTorrentID();
+
         LocalPreferences.set("selected_category", hash);
         selectedCategory = Number(hash);
         highlightSelectedCategory();
         updateMainData();
+
+        const newHash = torrentsTable.getCurrentTorrentID();
+        handleFilterSelectionChange(currentHash, newHash);
     };
 
     setTagFilter = function(hash) {
+        const currentHash = torrentsTable.getCurrentTorrentID();
+
         LocalPreferences.set("selected_tag", hash);
         selectedTag = Number(hash);
         highlightSelectedTag();
         updateMainData();
+
+        const newHash = torrentsTable.getCurrentTorrentID();
+        handleFilterSelectionChange(currentHash, newHash);
     };
 
     setTrackerFilter = function(hash) {
+        const currentHash = torrentsTable.getCurrentTorrentID();
+
         LocalPreferences.set("selected_tracker", hash);
         selectedTracker = Number(hash);
         highlightSelectedTracker();
         updateMainData();
+
+        const newHash = torrentsTable.getCurrentTorrentID();
+        handleFilterSelectionChange(currentHash, newHash);
     };
 
     toggleFilterDisplay = function(filterListID) {
@@ -1243,6 +1275,16 @@ window.addEventListener("DOMContentLoaded", () => {
         let rssTabInitialized = false;
 
         return () => {
+            // we must wait until the panel is fully loaded before proceeding.
+            // this include's the panel's custom js, which is loaded via MochaUI.Panel's 'require' field.
+            // MochaUI loads these files asynchronously and thus all required libs may not be available immediately
+            if (!isRssPanelLoaded) {
+                setTimeout(() => {
+                    showRssTab();
+                }, 100);
+                return;
+            }
+
             if (!rssTabInitialized) {
                 window.qBittorrent.Rss.init();
                 rssTabInitialized = true;
@@ -1343,6 +1385,9 @@ window.addEventListener("DOMContentLoaded", () => {
             },
             loadMethod: "xhr",
             contentURL: "views/rss.html",
+            onContentLoaded: () => {
+                isRssPanelLoaded = true;
+            },
             content: "",
             column: "rssTabColumn",
             height: null
