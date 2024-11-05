@@ -296,14 +296,15 @@ namespace
     {
         switch (mode)
         {
-        default:
-            Q_ASSERT(false);
         case MoveStorageMode::FailIfExist:
             return lt::move_flags_t::fail_if_exist;
         case MoveStorageMode::KeepExistingFiles:
             return lt::move_flags_t::dont_replace;
         case MoveStorageMode::Overwrite:
             return lt::move_flags_t::always_replace_files;
+        default:
+            Q_UNREACHABLE();
+            break;
         }
     }
 }
@@ -5503,6 +5504,11 @@ void SessionImpl::setTorrentContentLayout(const TorrentContentLayout value)
 // Read alerts sent by libtorrent session
 void SessionImpl::readAlerts()
 {
+    // cache current datetime of Qt and libtorrent clocks in order
+    // to optimize conversion of time points from lt to Qt clocks
+    m_ltNow = lt::clock_type::now();
+    m_qNow = QDateTime::currentDateTime();
+
     const std::vector<lt::alert *> alerts = getPendingAlerts();
 
     Q_ASSERT(m_loadedTorrents.isEmpty());
@@ -6371,4 +6377,10 @@ void SessionImpl::handleRemovedTorrent(const TorrentID &torrentID, const QString
     }
 
     m_removingTorrents.erase(removingTorrentDataIter);
+}
+
+QDateTime SessionImpl::fromLTTimePoint32(const libtorrent::time_point32 &timePoint) const
+{
+    const auto secsSinceNow = lt::duration_cast<lt::seconds>(timePoint - m_ltNow + lt::milliseconds(500)).count();
+    return m_qNow.addSecs(secsSinceNow);
 }
