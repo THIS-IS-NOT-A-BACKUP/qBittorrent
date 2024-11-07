@@ -49,6 +49,7 @@
 
 #include <QtSystemDetection>
 #include <QByteArray>
+#include <QCache>
 #include <QDebug>
 #include <QPointer>
 #include <QSet>
@@ -94,7 +95,15 @@ namespace
 
     QString toString(const lt::tcp::endpoint &ltTCPEndpoint)
     {
-        return QString::fromStdString((std::stringstream() << ltTCPEndpoint).str());
+        static QCache<lt::tcp::endpoint, QString> cache;
+
+        if (const QString *endpointName = cache.object(ltTCPEndpoint))
+            return *endpointName;
+
+        const std::string tmp = (std::ostringstream() << ltTCPEndpoint).str();
+        const auto endpointName = QString::fromLatin1(tmp.c_str(), tmp.size());
+        cache.insert(ltTCPEndpoint, new QString(endpointName));
+        return endpointName;
     }
 
     template <typename FromLTTimePoint32Func>
@@ -105,16 +114,6 @@ namespace
         Q_ASSERT(trackerEntryStatus.url == QString::fromStdString(nativeEntry.url));
 
         trackerEntryStatus.tier = nativeEntry.tier;
-
-        // remove outdated endpoints
-        trackerEntryStatus.endpoints.removeIf([&nativeEntry](const QHash<std::pair<QString, int>, TrackerEndpointStatus>::iterator &iter)
-        {
-            return std::none_of(nativeEntry.endpoints.cbegin(), nativeEntry.endpoints.cend()
-                    , [&endpointName = std::get<0>(iter.key())](const auto &existingEndpoint)
-            {
-                return (endpointName == toString(existingEndpoint.local_endpoint));
-            });
-        });
 
         const auto numEndpoints = static_cast<qsizetype>(nativeEntry.endpoints.size()) * btProtocols.size();
 
@@ -196,6 +195,19 @@ namespace
                     trackerEndpointStatus.message.clear();
                 }
             }
+        }
+
+        if (trackerEntryStatus.endpoints.size() > numEndpoints)
+        {
+            // remove outdated endpoints
+            trackerEntryStatus.endpoints.removeIf([&nativeEntry](const QHash<std::pair<QString, int>, TrackerEndpointStatus>::iterator &iter)
+            {
+                return std::none_of(nativeEntry.endpoints.cbegin(), nativeEntry.endpoints.cend()
+                        , [&endpointName = std::get<0>(iter.key())](const auto &existingEndpoint)
+                {
+                    return (endpointName == toString(existingEndpoint.local_endpoint));
+                });
+            });
         }
 
         if (numEndpoints > 0)
