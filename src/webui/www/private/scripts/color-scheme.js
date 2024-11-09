@@ -1,6 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2006  Christophe Dumez <chris@qbittorrent.org>
+ * Copyright (C) 2024  sledgehammer999 <hammered999@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,51 +26,31 @@
  * exception statement from your version.
  */
 
-#pragma once
+"use strict";
 
-#include <QStatusBar>
+window.qBittorrent ??= {};
+window.qBittorrent.ColorScheme ??= (() => {
+    const exports = () => {
+        return {
+            update,
+        };
+    };
 
-class QLabel;
-class QPushButton;
+    const LocalPreferences = new window.qBittorrent.LocalPreferences.LocalPreferencesClass();
+    const colorSchemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-namespace BitTorrent
-{
-    struct SessionStatus;
-}
+    const update = () => {
+        const root = document.documentElement;
+        const colorScheme = LocalPreferences.get("color_scheme");
+        const validScheme = (colorScheme === "light") || (colorScheme === "dark");
+        const isDark = colorSchemeQuery.matches;
+        root.classList.toggle("dark", ((!validScheme && isDark) || (colorScheme === "dark")));
+    };
 
-class StatusBar final : public QStatusBar
-{
-    Q_OBJECT
-    Q_DISABLE_COPY_MOVE(StatusBar)
+    colorSchemeQuery.addEventListener("change", update);
 
-public:
-    StatusBar(QWidget *parent = nullptr);
-    ~StatusBar() override;
+    return exports();
+})();
+Object.freeze(window.qBittorrent.ColorScheme);
 
-signals:
-    void alternativeSpeedsButtonClicked();
-    void connectionButtonClicked();
-
-public slots:
-    void showRestartRequired();
-
-private slots:
-    void refresh();
-    void updateAltSpeedsBtn(bool alternative);
-    void capSpeed();
-    void optionsSaved();
-
-private:
-    void updateConnectionStatus();
-    void updateDHTNodesNumber();
-    void updateExternalAddressesLabel();
-    void updateExternalAddressesVisibility();
-    void updateSpeedLabels();
-
-    QPushButton *m_dlSpeedLbl = nullptr;
-    QPushButton *m_upSpeedLbl = nullptr;
-    QLabel *m_lastExternalIPsLbl = nullptr;
-    QLabel *m_DHTLbl = nullptr;
-    QPushButton *m_connecStatusLblIcon = nullptr;
-    QPushButton *m_altSpeedsBtn = nullptr;
-};
+window.qBittorrent.ColorScheme.update();
