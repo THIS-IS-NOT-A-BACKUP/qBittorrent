@@ -29,8 +29,9 @@ window.qBittorrent ??= {};
 window.qBittorrent.Client ??= (() => {
     const exports = () => {
         return {
+            setup: setup,
             closeWindow: closeWindow,
-            closeWindows: closeWindows,
+            closeFrameWindow: closeFrameWindow,
             getSyncMainDataInterval: getSyncMainDataInterval,
             isStopped: isStopped,
             stop: stop,
@@ -44,6 +45,13 @@ window.qBittorrent.Client ??= (() => {
         };
     };
 
+    const setup = () => {
+        // fetch various data and store it in memory
+        window.qBittorrent.Cache.buildInfo.init();
+        window.qBittorrent.Cache.preferences.init();
+        window.qBittorrent.Cache.qbtVersion.init();
+    };
+
     const closeWindow = (windowID) => {
         const window = document.getElementById(windowID);
         if (!window)
@@ -51,8 +59,8 @@ window.qBittorrent.Client ??= (() => {
         MochaUI.closeWindow(window);
     };
 
-    const closeWindows = () => {
-        MochaUI.closeAll();
+    const closeFrameWindow = (window) => {
+        closeWindow(window.frameElement.closest("div.mocha").id);
     };
 
     const getSyncMainDataInterval = () => {
@@ -103,6 +111,8 @@ window.qBittorrent.Client ??= (() => {
     return exports();
 })();
 Object.freeze(window.qBittorrent.Client);
+
+window.qBittorrent.Client.setup();
 
 // TODO: move global functions/variables into some namespace/scope
 
@@ -1755,11 +1765,6 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 window.addEventListener("load", () => {
-    // fetch various data and store it in memory
-    window.qBittorrent.Cache.buildInfo.init();
-    window.qBittorrent.Cache.preferences.init();
-    window.qBittorrent.Cache.qbtVersion.init();
-
     // switch to previously used tab
     const previouslyUsedTab = LocalPreferences.get("selected_window_tab", "transfers");
     switch (previouslyUsedTab) {

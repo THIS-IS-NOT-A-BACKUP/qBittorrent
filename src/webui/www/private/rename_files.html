@@ -25,7 +25,7 @@
                 menu: "multiRenameFilesMenu",
                 actions: {
                     ToggleSelection: (element, ref) => {
-                        const rowId = parseInt(element.getAttribute("data-row-id"), 10);
+                        const rowId = Number(element.getAttribute("data-row-id"));
                         const row = bulkRenameFilesTable.getNode(rowId);
                         const checkState = (row.checked === 1) ? 0 : 1;
                         bulkRenameFilesTable.toggleNodeTreeCheckbox(rowId, checkState);
@@ -65,11 +65,11 @@
                 defaultEventType: "keydown",
                 events: {
                     "Escape": function(event) {
-                        window.parent.qBittorrent.Client.closeWindows();
+                        window.parent.qBittorrent.Client.closeFrameWindow(window);
                         event.preventDefault();
                     },
                     "Esc": function(event) {
-                        window.parent.qBittorrent.Client.closeWindows();
+                        window.parent.qBittorrent.Client.closeFrameWindow(window);
                         event.preventDefault();
                     }
                 }
@@ -117,7 +117,7 @@
                 $("include_folders").checked = fileRenamer.includeFolders;
 
                 const multirename_fileEnumerationStart = LocalPreferences.get("multirename_fileEnumerationStart", 0);
-                fileRenamer.fileEnumerationStart = parseInt(multirename_fileEnumerationStart, 10);
+                fileRenamer.fileEnumerationStart = Number(multirename_fileEnumerationStart);
                 $("file_counter").value = fileRenamer.fileEnumerationStart;
 
                 const multirename_replaceAll = LocalPreferences.get("multirename_replaceAll", false);
@@ -285,7 +285,7 @@
                 $("renameButton").value = replaceOperation;
             });
             $("closeButton").addEventListener("click", () => {
-                window.parent.qBittorrent.Client.closeWindows();
+                window.parent.qBittorrent.Client.closeFrameWindow(window);
                 event.preventDefault();
             });
             // synchronize header scrolling to table body
