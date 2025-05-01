@@ -1515,7 +1515,8 @@ qreal TorrentImpl::realRatio() const
 
     const qreal ratio = upload / static_cast<qreal>(download);
     Q_ASSERT(ratio >= 0);
-    return (ratio > MAX_RATIO) ? MAX_RATIO : ratio;
+
+    return ratio;
 }
 
 int TorrentImpl::uploadPayloadRate() const
@@ -2677,8 +2678,6 @@ void TorrentImpl::setRatioLimit(qreal limit)
 {
     if (limit < USE_GLOBAL_RATIO)
         limit = NO_RATIO_LIMIT;
-    else if (limit > MAX_RATIO)
-        limit = MAX_RATIO;
 
     if (m_ratioLimit != limit)
     {
@@ -2692,8 +2691,6 @@ void TorrentImpl::setSeedingTimeLimit(int limit)
 {
     if (limit < USE_GLOBAL_SEEDING_TIME)
         limit = NO_SEEDING_TIME_LIMIT;
-    else if (limit > MAX_SEEDING_TIME)
-        limit = MAX_SEEDING_TIME;
 
     if (m_seedingTimeLimit != limit)
     {
@@ -2707,8 +2704,6 @@ void TorrentImpl::setInactiveSeedingTimeLimit(int limit)
 {
     if (limit < USE_GLOBAL_INACTIVE_SEEDING_TIME)
         limit = NO_INACTIVE_SEEDING_TIME_LIMIT;
-    else if (limit > MAX_INACTIVE_SEEDING_TIME)
-        limit = MAX_SEEDING_TIME;
 
     if (m_inactiveSeedingTimeLimit != limit)
     {

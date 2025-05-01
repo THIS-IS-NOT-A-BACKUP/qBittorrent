@@ -2912,8 +2912,8 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             let maxRatio = -1;
             if (document.getElementById("maxRatioCheckbox").checked) {
                 maxRatio = Number(document.getElementById("maxRatioValue").value);
-                if (isNaN(maxRatio) || (maxRatio < 0) || (maxRatio > 9998)) {
-                    alert("QBT_TR(Share ratio limit must be between 0 and 9998.)QBT_TR[CONTEXT=HttpServer]");
+                if (isNaN(maxRatio) || (maxRatio < 0)) {
+                    alert("QBT_TR(Share ratio limit must not have a negative value.)QBT_TR[CONTEXT=HttpServer]");
                     return;
                 }
             }
@@ -2923,8 +2923,8 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             let maxSeedingTime = -1;
             if (document.getElementById("maxSeedingTimeCheckbox").checked) {
                 maxSeedingTime = Number(document.getElementById("maxSeedingTimeValue").value);
-                if (Number.isNaN(maxSeedingTime) || (maxSeedingTime < 0) || (maxSeedingTime > 525600)) {
-                    alert("QBT_TR(Seeding time limit must be between 0 and 525600 minutes.)QBT_TR[CONTEXT=HttpServer]");
+                if (Number.isNaN(maxSeedingTime) || (maxSeedingTime < 0)) {
+                    alert("QBT_TR(Seeding time limit must not have a negative value.)QBT_TR[CONTEXT=HttpServer]");
                     return;
                 }
             }
@@ -2934,8 +2934,8 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             let maxInactiveSeedingTime = -1;
             if (document.getElementById("maxInactiveSeedingTimeCheckbox").checked) {
                 maxInactiveSeedingTime = Number(document.getElementById("maxInactiveSeedingTimeValue").value);
-                if (Number.isNaN(maxInactiveSeedingTime) || (maxInactiveSeedingTime < 0) || (maxInactiveSeedingTime > 525600)) {
-                    alert("QBT_TR(Seeding time limit must be between 0 and 525600 minutes.)QBT_TR[CONTEXT=HttpServer]");
+                if (Number.isNaN(maxInactiveSeedingTime) || (maxInactiveSeedingTime < 0)) {
+                    alert("QBT_TR(Seeding time limit must not have a negative value.)QBT_TR[CONTEXT=HttpServer]");
                     return;
                 }
             }
