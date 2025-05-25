@@ -1,7 +1,7 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2018-2025  Mike Tzou (Chocobo1)
- * Copyright (C) 2006  Christophe Dumez <chris@qbittorrent.org>
+ * Copyright (C) 2025  bolshoytoster <toasterbig@gmail.com>
+ * Copyright (C) 2025  Mike Tzou (Chocobo1)
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,30 +27,46 @@
  * exception statement from your version.
  */
 
-#pragma once
+"use strict";
 
-#include <QString>
-
-#include "base/global.h"
-#include "base/path.h"
-#include "base/utils/version.h"
-
-namespace Utils::ForeignApps
-{
-    inline const QString PYTHON_ISOLATE_MODE_FLAG = u"-I"_s;
-
-    struct PythonInfo
-    {
-        using Version = Utils::Version<3, 1>;
-
-        bool isValid() const;
-        bool isSupportedVersion() const;
-
-        Path executablePath;
-        Version version;
-
-        inline static const Version MINIMUM_SUPPORTED_VERSION {3, 9, 0};
+window.qBittorrent ??= {};
+window.qBittorrent.MonkeyPatch ??= (() => {
+    const exports = () => {
+        return {
+            patch: patch
+        };
     };
 
-    PythonInfo pythonInfo();
-}
+    const patch = () => {
+        patchMootoolsDocumentId();
+    };
+
+    const patchMootoolsDocumentId = () => {
+        // Override MooTools' `document.id` (used for `$(id)`), which prevents it
+        // from allocating a `uniqueNumber` for elements that don't need it.
+        // MooTools and MochaUI use it internally.
+
+        if (document.id === undefined)
+            return;
+
+        document.id = (el) => {
+            if ((el === null) || (el === undefined))
+                return null;
+
+            switch (typeof el) {
+                case "object":
+                    return el;
+                case "string":
+                    return document.getElementById(el);
+            }
+
+            return null;
+        };
+    };
+
+    return exports();
+})();
+Object.freeze(window.qBittorrent.MonkeyPatch);
+
+// execute now
+window.qBittorrent.MonkeyPatch.patch();
