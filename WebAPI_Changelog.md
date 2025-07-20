@@ -1,8 +1,15 @@
 # WebAPI Changelog
 
+## 2.12.0
+
+* [#22989](https://github.com/qbittorrent/qBittorrent/pull/22989)
+  * `sync/maindata` returns one new field: `share_limit_action`
+  * `torrents/setShareLimits` now requires a new `shareLimitAction` param that sets a torrent's shareLimitAction property
+    * possible values `Default`, `Stop`, `Remove`, `RemoveWithContent` and `EnableSuperSeeding`
+
 ## 2.11.10
 
-* [#22932](https://github.com/qbittorrent/qBittorrent/pull/22932)
+* [#22958](https://github.com/qbittorrent/qBittorrent/pull/22958)
   * `torrents/categories` and `sync/maindata` now serialize categories' `downloadPath` to `null`, rather than `undefined`
 * [#22954](https://github.com/qbittorrent/qBittorrent/pull/22954)
   * `torrents/reannounce` supports specifying individual trackers via `trackers` field
