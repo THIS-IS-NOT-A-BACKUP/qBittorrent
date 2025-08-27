@@ -583,7 +583,8 @@ window.addEventListener("DOMContentLoaded", (event) => {
         if (!categoryList)
             return;
 
-        [...categoryList.children].forEach((el) => { el.remove(); });
+        for (const el of [...categoryList.children])
+            el.remove();
 
         const categoryItemTemplate = document.getElementById("categoryFilterItem");
 
@@ -704,7 +705,8 @@ window.addEventListener("DOMContentLoaded", (event) => {
         if (tagFilterList === null)
             return;
 
-        [...tagFilterList.children].forEach((el) => { el.remove(); });
+        for (const el of [...tagFilterList.children])
+            el.remove();
 
         const tagItemTemplate = document.getElementById("tagFilterItem");
 
@@ -757,7 +759,8 @@ window.addEventListener("DOMContentLoaded", (event) => {
         if (trackerFilterList === null)
             return;
 
-        [...trackerFilterList.children].forEach((el) => { el.remove(); });
+        for (const el of [...trackerFilterList.children])
+            el.remove();
 
         const trackerItemTemplate = document.getElementById("trackerFilterItem");
 
@@ -1618,7 +1621,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
         },
         column: "mainColumn",
         onResize: window.qBittorrent.Misc.createDebounceHandler(500, (e) => {
-            const isHidden = (parseInt(document.getElementById("propertiesPanel").style.height, 10) === 0);
+            const isHidden = (Number.parseInt(document.getElementById("propertiesPanel").style.height, 10) === 0);
             if (!isHidden)
                 saveColumnSizes();
         }),
@@ -1628,7 +1631,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
     if (prop_h !== null)
         prop_h = Number(prop_h) * Window.getSize().y;
     else
-        prop_h = Window.getSize().y / 2.0;
+        prop_h = Window.getSize().y / 2;
     new MochaUI.Panel({
         id: "propertiesPanel",
         title: "Panel",
