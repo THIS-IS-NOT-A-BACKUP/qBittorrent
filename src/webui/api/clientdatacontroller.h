@@ -1,6 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2018  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2025  Thomas Piccirello <thomas@piccirello.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,25 +28,22 @@
 
 #pragma once
 
-#include "base/exceptions.h"
+#include "apicontroller.h"
 
-enum class APIErrorType
-{
-    AccessDenied,
-    BadParams,
-    BadData,
-    Conflict,
-    NotFound,
-    Unauthorized
-};
+class ClientDataStorage;
 
-class APIError : public RuntimeError
+class ClientDataController final : public APIController
 {
+    Q_OBJECT
+    Q_DISABLE_COPY_MOVE(ClientDataController)
+
 public:
-    explicit APIError(APIErrorType type, const QString &message = {});
+    ClientDataController(ClientDataStorage *clientDataStorage, IApplication *app, QObject *parent = nullptr);
 
-    APIErrorType type() const;
+private slots:
+    void loadAction();
+    void storeAction();
 
 private:
-    APIErrorType m_type;
+    ClientDataStorage *m_clientDataStorage = nullptr;
 };

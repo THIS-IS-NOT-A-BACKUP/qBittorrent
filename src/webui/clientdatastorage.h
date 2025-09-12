@@ -1,6 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2018  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2025  Thomas Piccirello <thomas@piccirello.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,25 +28,24 @@
 
 #pragma once
 
-#include "base/exceptions.h"
+#include <QJsonObject>
 
-enum class APIErrorType
-{
-    AccessDenied,
-    BadParams,
-    BadData,
-    Conflict,
-    NotFound,
-    Unauthorized
-};
+#include "base/3rdparty/expected.hpp"
+#include "base/path.h"
 
-class APIError : public RuntimeError
+class ClientDataStorage final : public QObject
 {
+    Q_OBJECT
+    Q_DISABLE_COPY_MOVE(ClientDataStorage)
+
 public:
-    explicit APIError(APIErrorType type, const QString &message = {});
+    ClientDataStorage(QObject *parent = nullptr);
 
-    APIErrorType type() const;
+    nonstd::expected<void, QString> storeData(const QJsonObject &object);
+    QJsonObject loadData() const;
+    QJsonObject loadData(const QStringList &keys) const;
 
 private:
-    APIErrorType m_type;
+    Path m_clientDataFilePath;
+    QJsonObject m_clientData;
 };
