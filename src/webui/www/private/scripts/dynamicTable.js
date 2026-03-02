@@ -75,7 +75,7 @@ window.qBittorrent.DynamicTable ??= (() => {
             this.dynamicTableDivId = dynamicTableDivId;
             this.dynamicTableFixedHeaderDivId = dynamicTableFixedHeaderDivId;
             this.dynamicTableDiv = document.getElementById(dynamicTableDivId);
-            this.useVirtualList = clientData.get("use_virtual_list") === true;
+            this.useVirtualList = clientData.get("use_virtual_list") ?? true;
             this.fixedTableHeader = document.querySelector(`#${dynamicTableFixedHeaderDivId} thead tr`);
             this.table = this.dynamicTableDiv.querySelector("table");
             this.colgroup = document.createElement("colgroup");
@@ -2525,11 +2525,22 @@ window.qBittorrent.DynamicTable ??= (() => {
                 return;
 
             const node = this.getNode(id);
-            if (node.isFolder) {
+            if (node.isFolder && !this.isCollapsed(node.rowId)) {
                 this.collapseNode(node.rowId);
                 if (this.useVirtualList)
                     this.rerender();
+                return;
             }
+
+            // when node is already collapsed or is a file, select parent
+            const parent = node.root;
+            if ((parent === null) || (parent.rowId === null))
+                return;
+
+            const parentRowId = parent.rowId.toString();
+            this.deselectAll();
+            this.selectRow(parentRowId);
+            this.getTrByRowId(parentRowId)?.focus({ preventScroll: true });
         }
 
         isAllCheckboxesChecked() {
