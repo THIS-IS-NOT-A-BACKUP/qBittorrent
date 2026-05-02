@@ -1,6 +1,7 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2024-2026  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2026  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2018-2025  Mike Tzou (Chocobo1)
  * Copyright (C) 2006  Christophe Dumez <chris@qbittorrent.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -29,26 +30,14 @@
 
 #pragma once
 
-#include <QDialog>
+#include <windows.h>
 
-#include "ui_deletionconfirmationdialog.h"
+#include <QtContainerFwd>
+#include <QString>
 
-namespace Ui
+namespace Utils::Reg
 {
-    class DeletionConfirmationDialog;
+    QStringList getSubkeys(const HKEY handle);
+    QString getStringValue(const HKEY handle, const QString &name = {});
+    ulong getULongValue(const HKEY handle, const QString &name = {});
 }
-
-class DeletionConfirmationDialog final : public QDialog
-{
-    Q_OBJECT
-    Q_DISABLE_COPY_MOVE(DeletionConfirmationDialog)
-
-public:
-    DeletionConfirmationDialog(QWidget *parent, int torrentsCount, const QString &name, bool defaultDeleteFiles);
-    ~DeletionConfirmationDialog() override;
-
-    bool isRemoveContentSelected() const;
-
-private:
-    Ui::DeletionConfirmationDialog *m_ui = nullptr;
-};
