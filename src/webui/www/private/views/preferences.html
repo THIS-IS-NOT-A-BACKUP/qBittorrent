@@ -43,7 +43,7 @@
     </fieldset>
 
     <fieldset class="settings">
-        <legend>QBT_TR(Transfer list)QBT_TR[CONTEXT=OptionsDialog]</legend>
+        <legend>QBT_TR(Transfer List)QBT_TR[CONTEXT=OptionsDialog]</legend>
         <div class="formRow" style="margin-bottom: 3px;" title="QBT_TR(Shows a confirmation dialog upon torrent deletion)QBT_TR[CONTEXT=OptionsDialog]">
             <input type="checkbox" id="confirmTorrentDeletion">
             <label for="confirmTorrentDeletion">QBT_TR(Confirm when deleting torrents)QBT_TR[CONTEXT=OptionsDialog]</label>
@@ -93,6 +93,14 @@
     </fieldset>
 
     <fieldset class="settings">
+        <legend>QBT_TR(Status bar)QBT_TR[CONTEXT=OptionsDialog]</legend>
+        <div class="formRow" style="margin-bottom: 3px;">
+            <input type="checkbox" id="statusBarExternalIP">
+            <label for="statusBarExternalIP">QBT_TR(Show external IP)QBT_TR[CONTEXT=OptionsDialog]</label>
+        </div>
+    </fieldset>
+
+    <fieldset class="settings">
         <legend>
             <input type="checkbox" id="filelog_checkbox" onclick="qBittorrent.Preferences.updateFileLogEnabled();">
             <label for="filelog_checkbox">QBT_TR(Log Files)QBT_TR[CONTEXT=OptionsDialog]</label>
@@ -123,11 +131,6 @@
             </tbody>
         </table>
     </fieldset>
-
-    <div class="formRow" style="margin-bottom: 3px;">
-        <input type="checkbox" id="statusBarExternalIP">
-        <label for="statusBarExternalIP">QBT_TR(Show external IP in status bar)QBT_TR[CONTEXT=OptionsDialog]</label>
-    </div>
 
     <div class="formRow" style="margin-bottom: 5px;">
         <input type="checkbox" id="performanceWarning">
@@ -3320,32 +3323,27 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
 
             // hide entries
             const libtorrentVersion = window.qBittorrent.Misc.parseVersion(buildInfo.libtorrent);
-            if (libtorrentVersion.valid) {
-                if (libtorrentVersion.major >= 2) {
-                    document.getElementById("rowDiskCache").style.display = "none";
-                    document.getElementById("rowDiskCacheExpiryInterval").style.display = "none";
-                    document.getElementById("rowCoalesceReadsAndWrites").style.display = "none";
-
-                    if ((libtorrentVersion.major === 2) && (libtorrentVersion.minor === 0)) {
-                        document.getElementById("diskIOTypePreadPwrite").hidden = true;
-
-                        if (libtorrentVersion.fix < 6)
-                            document.getElementById("diskIOWriteModeWriteThrough").hidden = true;
-                    }
-                }
-                else {
-                    document.getElementById("fieldsetI2p").style.display = "none";
-                    document.getElementById("rowMemoryWorkingSetLimit").style.display = "none";
-                    document.getElementById("rowHashingThreads").style.display = "none";
-                    document.getElementById("rowDiskIOType").style.display = "none";
-                    document.getElementById("rowI2pInboundQuantity").style.display = "none";
-                    document.getElementById("rowI2pOutboundQuantity").style.display = "none";
-                    document.getElementById("rowI2pInboundLength").style.display = "none";
-                    document.getElementById("rowI2pOutboundLength").style.display = "none";
-
-                    document.getElementById("diskIOWriteModeWriteThrough").hidden = true;
-                }
+            if (window.qBittorrent.Misc.compareVersions(libtorrentVersion, "2") >= 0) {
+                document.getElementById("rowDiskCache").style.display = "none";
+                document.getElementById("rowDiskCacheExpiryInterval").style.display = "none";
+                document.getElementById("rowCoalesceReadsAndWrites").style.display = "none";
             }
+            else {
+                document.getElementById("fieldsetI2p").style.display = "none";
+                document.getElementById("rowMemoryWorkingSetLimit").style.display = "none";
+                document.getElementById("rowHashingThreads").style.display = "none";
+                document.getElementById("rowDiskIOType").style.display = "none";
+                document.getElementById("rowI2pInboundQuantity").style.display = "none";
+                document.getElementById("rowI2pOutboundQuantity").style.display = "none";
+                document.getElementById("rowI2pInboundLength").style.display = "none";
+                document.getElementById("rowI2pOutboundLength").style.display = "none";
+            }
+
+            if (window.qBittorrent.Misc.compareVersions(libtorrentVersion, "2.0.6") < 0)
+                document.getElementById("diskIOWriteModeWriteThrough").hidden = true;
+
+            if (window.qBittorrent.Misc.compareVersions(libtorrentVersion, "2.1") < 0)
+                document.getElementById("diskIOTypePreadPwrite").hidden = true;
 
             if ((buildInfo.platform === "linux") || (buildInfo.platform === "macos"))
                 document.getElementById("rowMemoryWorkingSetLimit").style.display = "none";
