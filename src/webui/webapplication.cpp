@@ -690,7 +690,10 @@ void WebApplication::processRequest(const Http::Request &request, const Http::En
     try
     {
         // block suspicious requests
-        if ((!isUsingApiKey && m_isCSRFProtectionEnabled && isCrossSiteRequest(m_request))
+        // CSRF check is skipped for the webroot so that cross-origin hyperlinks to
+        // the WebUI succeed; the root document is static and has no side effects.
+        const bool isWebRoot = (request.path == u"/") || (request.path == INDEX_HTML);
+        if ((!isUsingApiKey && m_isCSRFProtectionEnabled && !isWebRoot && isCrossSiteRequest(m_request))
             || (m_isHostHeaderValidationEnabled && !validateHostHeader(m_domainList)))
         {
             throw UnauthorizedHTTPError();
@@ -752,7 +755,7 @@ void WebApplication::setSessionCookie(Http::HeaderMap &headers)
         cookie.setSecure(m_isSecureCookieEnabled && isOriginTrustworthy());  // [rfc6265] 4.1.2.5. The Secure Attribute
         cookie.setPath(u"/"_s);
         if (m_isCSRFProtectionEnabled)
-            cookie.setSameSitePolicy(QNetworkCookie::SameSite::Strict);
+            cookie.setSameSitePolicy(QNetworkCookie::SameSite::Lax);
         else if (cookie.isSecure())
             cookie.setSameSitePolicy(QNetworkCookie::SameSite::None);
         headers.insert(Http::HEADER_SET_COOKIE, QString::fromLatin1(cookie.toRawForm()));
