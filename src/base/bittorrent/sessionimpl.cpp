@@ -2376,6 +2376,14 @@ void SessionImpl::processTorrentShareLimits(TorrentImpl *torrent)
 
     const ShareLimits shareLimits = torrent->effectiveShareLimits();
 
+    // If all share limits are disabled, there is nothing to check
+    if ((shareLimits.ratioLimit < 0)
+            && (shareLimits.seedingTimeLimit < 0)
+            && (shareLimits.inactiveSeedingTimeLimit < 0))
+    {
+        return;
+    }
+
     bool reached = false;
     QString description;
 
@@ -5412,15 +5420,16 @@ void SessionImpl::handleTorrentContentFileRenamed(TorrentImpl *torrent, const in
     emit torrentContentFileRenamed(torrent, index, oldFilePath);
 }
 
-void SessionImpl::handleTorrentContentFolderRenamed(const Path &newFolderPath, const Path &oldFolderPath, const QHash<int, Path> &renamedFiles)
+void SessionImpl::handleTorrentContentFolderRenamed(TorrentImpl *torrent, const Path &newFolderPath
+        , const Path &oldFolderPath, const QHash<int, Path> &renamedFiles)
 {
-    emit torrentContentFolderRenamed(newFolderPath, oldFolderPath, renamedFiles);
+    emit torrentContentFolderRenamed(torrent, newFolderPath, oldFolderPath, renamedFiles);
 }
 
-void SessionImpl::handleTorrentContentFolderRenamingFailed(const Path &newFolderPath, const Path &oldFolderPath
-        , const QHash<int, Path> &renamedFiles, const QList<int> &failedFileIndexes)
+void SessionImpl::handleTorrentContentFolderRenamingFailed(TorrentImpl *torrent, const Path &newFolderPath
+        , const Path &oldFolderPath, const QHash<int, Path> &renamedFiles, const QList<int> &failedFileIndexes)
 {
-    emit torrentContentFolderRenamingFailed(newFolderPath, oldFolderPath, renamedFiles, failedFileIndexes);
+    emit torrentContentFolderRenamingFailed(torrent, newFolderPath, oldFolderPath, renamedFiles, failedFileIndexes);
 }
 
 void SessionImpl::handleTorrentStorageMovingStateChanged(TorrentImpl *torrent)
@@ -6084,7 +6093,7 @@ void SessionImpl::handleFileErrorAlert(const lt::file_error_alert *alert)
         LogMsg(tr("File error alert. Torrent: \"%1\". File: \"%2\". Reason: \"%3\"")
                 .arg(torrent->name(), QString::fromUtf8(alert->filename()), msg)
             , Log::WARNING);
-        emit fullDiskError(torrent, msg);
+        emit torrentIOError(torrent, msg);
     }
 
     m_recentErroredTorrentsTimer->start();
