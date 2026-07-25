@@ -1,7 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2021  Mike Tzou (Chocobo1)
- * Copyright (C) 2010  Christophe Dumez <chris@qbittorrent.org>
+ * Copyright (C) 2026  Vladimir Golovnev <glassez@yandex.ru>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,47 +28,27 @@
 
 #pragma once
 
+#include <QFuture>
 #include <QObject>
-#include <QUrl>
+#include <QVariant>
 
-#include "base/utils/version.h"
-
-namespace Net
-{
-    struct DownloadResult;
-}
-
-class ProgramUpdater final : public QObject
+class KeyValueDataStorage final : public QObject
 {
     Q_OBJECT
-    Q_DISABLE_COPY_MOVE(ProgramUpdater)
+    Q_DISABLE_COPY_MOVE(KeyValueDataStorage)
 
 public:
-    using Version = Utils::Version<4, 3>;
+    explicit KeyValueDataStorage(const QString &storageName, QObject *parent = nullptr);
+    ~KeyValueDataStorage() override;
 
-    using QObject::QObject;
-
-    void checkForUpdates();
-    Version getNewVersion() const;
-    bool updateProgram() const;
-
-signals:
-    void updateCheckFinished();
-
-private slots:
-    void fallbackDownloadFinished(const Net::DownloadResult &result, Version &version);
+    QFuture<QVariant> fetchValue(const QString &key) const;
+    void storeValue(const QString &key, const QVariant &value);
+    void storeValue(const QString &key, QVariant &&value);
+    void removeValue(const QString &key);
 
 private:
-    enum class RemoteSource
-    {
-        QbtMain,
-        QbtBackup
-    };
+    QString m_storageName;
 
-    void handleFinishedRequest();
-    RemoteSource getLatestRemoteSource() const;
-
-    int m_pendingRequestCount = 0;
-    Version m_qbtMainVersion;
-    Version m_qbtBackupVersion;
+    class Worker;
+    mutable Worker *m_asyncWorker = nullptr;
 };
